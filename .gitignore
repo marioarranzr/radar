@@ -1,0 +1,36 @@
+# ── PUBLIC repo: no secrets or personal data ──
+
+# Secrets (only .env.example is committed, empty)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local database (contains my research)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Dependencies and builds
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local Claude Code config (permissions, paths on my machine)
+.claude/settings.local.json
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
