@@ -115,12 +115,15 @@ Each `server_tool_use` block that appears in the streamed response is translated
 
 | Method | Route | Body / response | Notes |
 |---|---|---|---|
-| POST | `/api/research` | `{ query, context? }` → `{ id }` | 400 validation; 429 if over the daily limit |
+| POST | `/api/research` | `{ query, context? }` → `{ id }` | Requires `Content-Type: application/json` (415); 400 validation; 429 if over the daily limit |
 | GET | `/api/research/[id]` | → `{ research, steps }` | Used by polling; 404 if not found |
-| POST | `/api/research/[id]/retry` | → `{ id }` | Only if `status='failed'` |
+| POST | `/api/research/[id]/retry` | → `{ id }` | Only if `status='failed'` (409); max 3 attempts per research (409) |
 | DELETE | `/api/research/[id]` | → `204` | |
 
 The history and the brief are read directly from SQLite in Server Components (`src/lib/db.ts`).
+
+`src/middleware.ts` guards every `/api/*` route: the `Host` must be a localhost name (blocks DNS
+rebinding) and non-GET requests with a non-local `Origin` are rejected with 403 (blocks CSRF).
 
 ## 5. Environment variables (`.env.local`)
 
@@ -159,7 +162,9 @@ tests/
 
 - **Security:** API key only on the server and in `.env.local` (ignored by git); inputs validated
   with Zod; SQL queries always parameterized (`?`), never string concatenation; user text is never
-  interpolated into the system prompt. The server only listens on `localhost`.
+  interpolated into the system prompt. The server only listens on `127.0.0.1` (`next dev -H 127.0.0.1`).
+  The UI renders every report string as plain React text (never `dangerouslySetInnerHTML` or Markdown→HTML),
+  shows each link's hostname, and opens links with `rel="noopener noreferrer"`.
 - **Cost:** record `usage` (input/output tokens) in `research` to compute O4.
 - **Errors:** catch by type (`RateLimitError`, `APIStatusError`, `APIConnectionError`)
   and store a readable message in `research.error`.

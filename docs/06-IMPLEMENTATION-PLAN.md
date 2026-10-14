@@ -41,10 +41,10 @@
 > This is the phase where you **learn agents**. Read the raw responses, change the prompt, watch how the behavior changes.
 
 ## Phase 4 · API
-- [ ] **P4.1** `POST /api/research`: Zod, daily limit (429), INSERT, `after(() => runResearchAgent(id))`.
-- [ ] **P4.2** `GET /api/research/[id]` (research + steps) and `DELETE /api/research/[id]`.
-- [ ] **P4.3** `POST /api/research/[id]/retry`.
-- [ ] **P4.4** Route tests (validation → 400, limit → 429, missing → 404, ok). → `/ecc:code-review` + `ecc:security-reviewer` agent.
+- [x] **P4.1** `POST /api/research`: Zod, daily limit (429), INSERT, `after(() => runResearchAgent(id))`.
+- [x] **P4.2** `GET /api/research/[id]` (research + steps) and `DELETE /api/research/[id]`.
+- [x] **P4.3** `POST /api/research/[id]/retry`.
+- [x] **P4.4** Route tests (validation → 400, limit → 429, missing → 404, ok). → `/ecc:code-review` + `ecc:security-reviewer` agent.
 
 **Done:** with `curl` I can create, fetch, retry and delete; tests pass.
 

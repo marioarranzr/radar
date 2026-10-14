@@ -66,7 +66,7 @@ Automatic transition → 2b when `status='done'`, → 2c when `status='failed'`.
 | Element | Action | What happens |
 |---|---|---|
 | Brief with the 8 PRD sections (F4) | — | Facts with `confirmed:false` carry an "unconfirmed" label |
-| Links in Sources and Signals | Click | Open in a new tab (`rel="noopener"`) |
+| Links in Sources and Signals | Click | Open in a new tab (`rel="noopener noreferrer"`); the hostname is shown next to each title |
 | **"Copy Markdown"** button | Presses | Copies to clipboard; "Copied" toast |
 | **"New research"** button | Presses | `/` with focus on the Company field |
 | Footer: "Generated in 74 s · 3 searches · 5 pages read" | — | Transparency info |
@@ -75,7 +75,7 @@ Automatic transition → 2b when `status='done'`, → 2c when `status='failed'`.
 | Element | Action | What happens | Next |
 |---|---|---|---|
 | Readable message (`research.error`) | — | — | — |
-| **"Retry"** button | Presses | `POST /api/research/[id]/retry` | Same `id`, state 2a |
+| **"Retry"** button | Presses | `POST /api/research/[id]/retry` (409 after 3 attempts → toast "Start a new research") | Same `id`, state 2a |
 | **"Back"** button | Presses | — | `/` |
 
 **Edge cases:** non-existent `id` → 404 page "We couldn't find this research".

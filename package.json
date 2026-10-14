@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 127.0.0.1",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint && tsc --noEmit",
+    "start": "next start -H 127.0.0.1",
+    "lint": "eslint && next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "agent:try": "tsx scripts/try-agent.ts"
