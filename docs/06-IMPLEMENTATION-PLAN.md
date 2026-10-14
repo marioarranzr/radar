@@ -16,7 +16,7 @@
 ## Phase 1 · Skeleton
 - [x] **P1.1** `npx create-next-app@latest` in the current folder (TS, App Router, Tailwind, ESLint, `src/`). Adjust to the TRD §6 structure.
 - [x] **P1.2** Put the Design Brief color tokens and fonts into `globals.css` and `layout.tsx` (`next/font`).
-- [ ] **P1.3** Vitest + Testing Library + one trivial test; `test` and `lint` scripts in `package.json`.
+- [x] **P1.3** Vitest + Testing Library + one trivial test; `test` and `lint` scripts in `package.json`.
 - [ ] **P1.4** `src/lib/env.ts`: validates the TRD §5 variables with Zod; fails on startup if the API key is missing.
 
 **Done:** `npm run dev` shows a page with the right typography and colors; `npm test` and `npm run lint` pass.

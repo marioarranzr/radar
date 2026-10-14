@@ -23,7 +23,7 @@
 
 ### Allowed dependencies (closed list)
 - **Runtime:** `next`, `react`, `react-dom`, `@anthropic-ai/sdk`, `zod`
-- **Development:** `typescript`, `@types/*`, `tailwindcss` (+ its PostCSS plugin), `eslint` (+ Next config), `vitest`, `@testing-library/react`, `jsdom`
+- **Development:** `typescript`, `@types/*`, `tailwindcss` (+ its PostCSS plugin), `eslint` (+ Next config), `vitest`, `@testing-library/react`, `@testing-library/dom`, `jsdom`
 - Anything else → goes through the Decision log.
 
 ## 2. Architecture
@@ -183,4 +183,5 @@ tests/
 | 2026-10-14 | **Polling every 2 s** for progress | Supabase Realtime, SSE, websockets | The simplest thing that works |
 | 2026-10-14 | **No component library** (hand-written Tailwind) | shadcn/ui | Fewer dependencies; only a few components |
 | 2026-10-14 | npm | pnpm | Ships with Node |
+| 2026-10-14 | Add `@testing-library/dom` | — | Required peer dependency of `@testing-library/react` |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |
