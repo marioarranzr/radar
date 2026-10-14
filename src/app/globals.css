@@ -9,8 +9,8 @@
   --text-muted: #78716c;
   --accent: #2f5bea;
   --accent-fg: #ffffff;
-  --success: #15803d;
-  --warning: #b45309;
+  --success: #166534;
+  --warning: #92400e;
   --danger: #b91c1c;
 }
 
@@ -69,6 +69,15 @@ body {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
 }

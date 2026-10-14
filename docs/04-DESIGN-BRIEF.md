@@ -23,8 +23,8 @@ Lots of white space, little color; color is reserved for status and action.
 | `--text-muted` | `#78716C` | `#9A9AA0` | Secondary, dates |
 | `--accent` | `#2F5BEA` | `#6E8BFF` | Primary button, links, focus |
 | `--accent-fg` | `#FFFFFF` | `#0C0C0D` | Text on accent |
-| `--success` | `#15803D` | `#4ADE80` | "Ready" chip |
-| `--warning` | `#B45309` | `#FBBF24` | "Unconfirmed", "Queued" |
+| `--success` | `#166534` | `#4ADE80` | "Ready" chip |
+| `--warning` | `#92400E` | `#FBBF24` | "Unconfirmed", "Queued" |
 | `--danger` | `#B91C1C` | `#F87171` | Error, delete |
 
 Dark mode follows `prefers-color-scheme`. Minimum AA contrast (4.5:1 for text).
@@ -51,8 +51,8 @@ Dark mode follows `prefers-color-scheme`. Minimum AA contrast (4.5:1 for text).
 
 | Component | Variants / notes |
 |---|---|
-| `Button` | `primary` (accent), `secondary` (bordered), `ghost`, `destructive`. 40 px tall. Loading state with a spinner on the left and the text "Researching…" |
-| `Input` / `Textarea` | Label above, counter on the right below the field, error in `--danger` |
+| `Button` | `primary` (accent), `secondary` (bordered), `ghost`, `destructive` (text in `--accent-fg` for dark-mode contrast). 40 px tall. Loading state with a spinner on the left and the text "Researching…" |
+| `Input` / `Textarea` | Label above, counter on the right below the field, error in `--danger`. Border in `--text-muted` (≥ 3:1, WCAG 1.4.11) |
 | `Badge` (status chip) | Color background at 12 % opacity + colored text |
 | `Card` | `--surface` background, `--border` border, 24 px padding |
 | `ConfirmDialog` | For deleting; native `<dialog>` element |
