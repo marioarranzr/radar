@@ -8,13 +8,13 @@
 
 ## Phase 0 · Setup (manual, I do it)
 - [ ] **P0.1** Full Anthropic key in `.env.local` (console.anthropic.com) and a monthly spend limit (e.g. $10).
-- [ ] **P0.2** Create the `radar` repo on GitHub (**public**), local `git init`, check that no `.env*` gets pushed, first commit with `docs/`, `CLAUDE.md`, `README.md`, `.gitignore`, `.env.example`.
+- [x] **P0.2** Create the `radar` repo on GitHub (**public**), local `git init`, check that no `.env*` gets pushed, first commit with `docs/`, `CLAUDE.md`, `README.md`, `.gitignore`, `.env.example`.
 
 **Done:** `git status` clean, the remote repo has the docs and contains **no** keys
 (checked with `git ls-files` and by searching the history for `sk-ant-`).
 
 ## Phase 1 · Skeleton
-- [ ] **P1.1** `npx create-next-app@latest` in the current folder (TS, App Router, Tailwind, ESLint, `src/`). Adjust to the TRD §6 structure.
+- [x] **P1.1** `npx create-next-app@latest` in the current folder (TS, App Router, Tailwind, ESLint, `src/`). Adjust to the TRD §6 structure.
 - [ ] **P1.2** Put the Design Brief color tokens and fonts into `globals.css` and `layout.tsx` (`next/font`).
 - [ ] **P1.3** Vitest + Testing Library + one trivial test; `test` and `lint` scripts in `package.json`.
 - [ ] **P1.4** `src/lib/env.ts`: validates the TRD §5 variables with Zod; fails on startup if the API key is missing.
