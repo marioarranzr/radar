@@ -77,6 +77,9 @@ We don't need our own client-side tool loop in the MVP, except for the final
 - If the turn ends with `stop_reason: "pause_turn"`, the conversation is resent so it can continue.
 - If it ends without calling `submit_report`, it is resent once with a reminder message; if it fails
   again → `status='failed'`.
+- If the `submit_report` input fails Zod validation, the issues are returned once as an `is_error`
+  `tool_result` so the model can correct it; a second invalid brief → `status='failed'`.
+- At most 8 requests per run; `stop_reason: "refusal"` or `"max_tokens"` → `status='failed'`.
 
 ### 3.4 System prompt (summary; full version in `src/agent/prompt.ts`)
 - Role: B2B research analyst.
@@ -185,4 +188,5 @@ tests/
 | 2026-10-14 | npm | pnpm | Ships with Node |
 | 2026-10-14 | Add `@testing-library/dom` | — | Required peer dependency of `@testing-library/react` |
 | 2026-10-14 | Zod 4 instead of 3 | Zod 3 + `zod-to-json-schema` | `z.toJSONSchema()` is built in: one dependency fewer |
+| 2026-10-14 | `submit_report` without `eager_input_streaming` | Eager input streaming | The brief is small; eager streaming disables server-side validation, losing the `strict` schema guarantee |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |
