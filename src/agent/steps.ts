@@ -1,4 +1,4 @@
-import type Anthropic from "@anthropic-ai/sdk";
+import type OpenAI from "openai";
 import type { StepKind } from "@/lib/db";
 
 // Turns what the agent does into human-readable progress steps — see docs/02-TRD.md §3.6.
@@ -16,38 +16,34 @@ function truncate(text: string, max = MAX_LABEL): string {
 
 /** "https://www.acme.com/about/" → "acme.com/about" */
 export function shortUrl(raw: string): string {
+  const max = MAX_LABEL - "Reading: ".length;
   try {
     const url = new URL(raw);
     const host = url.hostname.replace(/^www\./, "");
     const path = url.pathname.replace(/\/+$/, "");
-    return truncate(host + path, MAX_LABEL - "Reading: ".length);
+    return truncate(host + path, max);
   } catch {
-    return truncate(raw, MAX_LABEL - "Reading: ".length);
+    return truncate(raw, max);
   }
 }
 
-function stringField(input: unknown, field: string): string | null {
-  if (input && typeof input === "object" && field in input) {
-    const value = (input as Record<string, unknown>)[field];
-    return typeof value === "string" && value.trim() ? value.trim() : null;
-  }
-  return null;
-}
-
-/** Returns the progress step for a finished content block, or null if it isn't one. */
-export function stepForBlock(block: Anthropic.Beta.BetaContentBlock): Step | null {
-  if (block.type === "server_tool_use") {
-    if (block.name === "web_search") {
-      const query = stringField(block.input, "query");
+/** Returns the progress step for a finished output item, or null if it isn't one. */
+export function stepForItem(item: OpenAI.Responses.ResponseOutputItem): Step | null {
+  if (item.type === "web_search_call") {
+    const { action } = item;
+    if (action.type === "search") {
+      const query = (action.queries?.[0] ?? action.query)?.trim();
       return { kind: "search", label: query ? truncate(`Searching: “${query}”`) : "Searching the web" };
     }
-    if (block.name === "web_fetch") {
-      const url = stringField(block.input, "url");
-      return { kind: "fetch", label: url ? `Reading: ${shortUrl(url)}` : "Reading a page" };
+    if (action.type === "open_page") {
+      return { kind: "fetch", label: action.url ? `Reading: ${shortUrl(action.url)}` : "Reading a page" };
+    }
+    if (action.type === "find_in_page") {
+      return { kind: "fetch", label: `Scanning: ${shortUrl(action.url)}` };
     }
     return null;
   }
-  if (block.type === "tool_use" && block.name === "submit_report") {
+  if (item.type === "function_call" && item.name === "submit_report") {
     return { kind: "info", label: "Writing the brief" };
   }
   return null;

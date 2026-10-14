@@ -2,10 +2,10 @@ import { z } from "zod";
 
 // Server-side environment variables — see docs/02-TRD.md §5.
 const EnvSchema = z.object({
-  ANTHROPIC_API_KEY: z
-    .string({ error: "ANTHROPIC_API_KEY is missing. Add it to .env.local." })
-    .startsWith("sk-ant-", "ANTHROPIC_API_KEY does not look like an Anthropic key."),
-  ANTHROPIC_MODEL: z.string().min(1).default("claude-opus-5-5"),
+  OPENAI_API_KEY: z
+    .string({ error: "OPENAI_API_KEY is missing. Add it to .env.local." })
+    .startsWith("sk-", "OPENAI_API_KEY does not look like an OpenAI key."),
+  OPENAI_MODEL: z.string().min(1).default("gpt-6.1-sol"),
   DAILY_RESEARCH_LIMIT: z.coerce.number().int().positive().default(10),
   DATABASE_PATH: z.string().min(1).default("./data/radar.db"),
 });

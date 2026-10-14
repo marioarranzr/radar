@@ -44,8 +44,8 @@ describe("reportInputSchema", () => {
     expect(schema.required).toEqual(Object.keys(ReportSchema.shape));
   });
 
-  it("drops keywords strict tool use does not support", () => {
-    for (const keyword of ["minItems", "maxItems", "minLength", "$schema", "pattern"]) {
+  it("drops keywords strict mode may not support", () => {
+    for (const keyword of ["minItems", "maxItems", "minLength", "$schema", "pattern", "format"]) {
       expect(json).not.toContain(`"${keyword}"`);
     }
   });

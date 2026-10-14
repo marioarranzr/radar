@@ -1,48 +1,54 @@
-import type Anthropic from "@anthropic-ai/sdk";
+import type OpenAI from "openai";
 import { describe, expect, it } from "vitest";
-import { shortUrl, stepForBlock } from "@/agent/steps";
+import { shortUrl, stepForItem } from "@/agent/steps";
 
-type Block = Anthropic.Beta.BetaContentBlock;
+type Item = OpenAI.Responses.ResponseOutputItem;
 
-const serverToolUse = (name: string, input: unknown) =>
-  ({ type: "server_tool_use", id: "srvtoolu_1", name, input }) as unknown as Block;
+const webSearch = (action: unknown) =>
+  ({ type: "web_search_call", id: "ws_1", status: "completed", action }) as Item;
 
-describe("stepForBlock", () => {
+describe("stepForItem", () => {
   it("describes a web search with its query", () => {
-    expect(stepForBlock(serverToolUse("web_search", { query: "acme pricing" }))).toEqual({
+    expect(stepForItem(webSearch({ type: "search", queries: ["acme pricing"] }))).toEqual({
       kind: "search",
       label: "Searching: “acme pricing”",
     });
+    expect(stepForItem(webSearch({ type: "search", query: "acme team" }))?.label).toBe(
+      "Searching: “acme team”",
+    );
   });
 
-  it("describes a web fetch with a short URL", () => {
-    expect(
-      stepForBlock(serverToolUse("web_fetch", { url: "https://www.acme.com/about/" })),
-    ).toEqual({ kind: "fetch", label: "Reading: acme.com/about" });
+  it("describes opening a page with a short URL", () => {
+    expect(stepForItem(webSearch({ type: "open_page", url: "https://www.acme.com/about/" }))).toEqual({
+      kind: "fetch",
+      label: "Reading: acme.com/about",
+    });
   });
 
-  it("falls back to a generic label when the input is missing", () => {
-    expect(stepForBlock(serverToolUse("web_search", {}))?.label).toBe("Searching the web");
-    expect(stepForBlock(serverToolUse("web_fetch", null))?.label).toBe("Reading a page");
+  it("describes searching inside a page", () => {
+    const item = webSearch({ type: "find_in_page", url: "https://acme.com/pricing", pattern: "seat" });
+    expect(stepForItem(item)).toEqual({ kind: "fetch", label: "Scanning: acme.com/pricing" });
+  });
+
+  it("falls back to generic labels when details are missing", () => {
+    expect(stepForItem(webSearch({ type: "search" }))?.label).toBe("Searching the web");
+    expect(stepForItem(webSearch({ type: "open_page", url: null }))?.label).toBe("Reading a page");
   });
 
   it("truncates very long search queries", () => {
-    const step = stepForBlock(serverToolUse("web_search", { query: "x".repeat(200) }));
+    const step = stepForItem(webSearch({ type: "search", queries: ["x".repeat(200)] }));
     expect(step?.label.length).toBeLessThanOrEqual(80);
     expect(step?.label.endsWith("…")).toBe(true);
   });
 
   it("announces the brief when submit_report is called", () => {
-    const block = { type: "tool_use", id: "toolu_1", name: "submit_report", input: {} } as Block;
-    expect(stepForBlock(block)).toEqual({ kind: "info", label: "Writing the brief" });
+    const item = { type: "function_call", name: "submit_report", arguments: "{}", call_id: "c1" } as Item;
+    expect(stepForItem(item)).toEqual({ kind: "info", label: "Writing the brief" });
   });
 
-  it("ignores text, thinking and tool result blocks", () => {
-    expect(stepForBlock({ type: "text", text: "hi", citations: null } as Block)).toBeNull();
-    expect(stepForBlock({ type: "thinking", thinking: "", signature: "s" } as Block)).toBeNull();
-    expect(
-      stepForBlock({ type: "web_search_tool_result", tool_use_id: "x", content: [] } as unknown as Block),
-    ).toBeNull();
+  it("ignores messages and reasoning items", () => {
+    expect(stepForItem({ type: "message", id: "m", role: "assistant", status: "completed", content: [] } as Item)).toBeNull();
+    expect(stepForItem({ type: "reasoning", id: "r", summary: [] } as Item)).toBeNull();
   });
 });
 

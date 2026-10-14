@@ -1,43 +1,48 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { runResearchAgent, type AgentDeps, type AgentStream } from "@/agent/run";
+import { runResearchAgent, type AgentDeps, type AgentRequest, type AgentStream } from "@/agent/run";
 import { createStore, openDatabase, type Store } from "@/lib/db";
 import { validReport } from "./fixtures/report";
 
-type Block = Anthropic.Beta.BetaContentBlock;
-type Message = Anthropic.Beta.BetaMessage;
-type Params = Parameters<AgentDeps["createStream"]>[0];
+type Item = OpenAI.Responses.ResponseOutputItem;
+type Response = OpenAI.Responses.Response;
 
 const search = (query: string) =>
-  ({ type: "server_tool_use", id: `srv_${query}`, name: "web_search", input: { query } }) as unknown as Block;
-const fetchPage = (url: string) =>
-  ({ type: "server_tool_use", id: `srv_${url}`, name: "web_fetch", input: { url } }) as unknown as Block;
-const submit = (input: unknown, id = "toolu_submit") =>
-  ({ type: "tool_use", id, name: "submit_report", input }) as Block;
-const text = (value: string) => ({ type: "text", text: value, citations: null }) as Block;
+  ({ type: "web_search_call", id: `ws_${query}`, status: "completed", action: { type: "search", queries: [query] } }) as Item;
+const openPage = (url: string) =>
+  ({ type: "web_search_call", id: `ws_${url}`, status: "completed", action: { type: "open_page", url } }) as Item;
+const submit = (report: unknown, callId = "call_submit") =>
+  ({ type: "function_call", name: "submit_report", call_id: callId, arguments: JSON.stringify(report) }) as Item;
+const message = (text: string) =>
+  ({ type: "message", id: "msg", role: "assistant", status: "completed", content: [{ type: "output_text", text, annotations: [] }] }) as Item;
+const refusal = () =>
+  ({ type: "message", id: "msg", role: "assistant", status: "completed", content: [{ type: "refusal", refusal: "No." }] }) as Item;
 
-function turn(content: Block[], stop_reason: Message["stop_reason"]): Message {
+let responseCount = 0;
+function response(output: Item[], extra: Partial<Response> = {}): Response {
   return {
-    content,
-    stop_reason,
-    usage: { input_tokens: 100, output_tokens: 50, cache_creation_input_tokens: 10, cache_read_input_tokens: 5 },
-  } as Message;
+    id: `resp_${++responseCount}`,
+    status: "completed",
+    output,
+    incomplete_details: null,
+    usage: { input_tokens: 100, output_tokens: 50 },
+    ...extra,
+  } as Response;
 }
 
-/** A fake Claude that plays back one scripted turn per request. */
-function fakeClaude(turns: Array<Message | Error>) {
-  const requests: Params[] = [];
-  const createStream = (params: Params): AgentStream => {
-    // Snapshot: the agent keeps appending to the same messages array.
-    requests.push({ ...params, messages: [...params.messages] });
-    const next = turns.shift();
-    if (!next) throw new Error("Fake Claude ran out of scripted turns");
-    const listeners: Array<(block: Block) => void> = [];
+/** A fake model that plays back one scripted response per request. */
+function fakeModel(responses: Array<Response | Error>) {
+  const requests: AgentRequest[] = [];
+  const createStream = (params: AgentRequest): AgentStream => {
+    requests.push(params);
+    const next = responses.shift();
+    if (!next) throw new Error("Fake model ran out of scripted responses");
+    const listeners: Array<(event: { item: Item }) => void> = [];
     return {
       on: (_event, listener) => listeners.push(listener),
-      finalMessage: async () => {
+      finalResponse: async () => {
         if (next instanceof Error) throw next;
-        for (const block of next.content) listeners.forEach((listener) => listener(block));
+        for (const item of next.output) listeners.forEach((listener) => listener({ item }));
         return next;
       },
     };
@@ -49,7 +54,7 @@ let store: Store;
 let id: string;
 
 function deps(createStream: AgentDeps["createStream"]): AgentDeps {
-  return { store, model: "claude-test", createStream, now: () => new Date("2026-10-14T09:00:00Z") };
+  return { store, model: "gpt-test", createStream, now: () => new Date("2026-10-14T09:00:00Z") };
 }
 
 beforeEach(() => {
@@ -60,17 +65,17 @@ beforeEach(() => {
 
 describe("runResearchAgent", () => {
   it("researches, records progress and stores a valid brief", async () => {
-    const claude = fakeClaude([
-      turn([search("acme analytics"), fetchPage("https://www.acme.example.com/about"), submit(validReport)], "tool_use"),
+    const model = fakeModel([
+      response([search("acme analytics"), openPage("https://www.acme.example.com/about"), submit(validReport)]),
     ]);
 
-    await runResearchAgent(id, deps(claude.createStream));
+    await runResearchAgent(id, deps(model.createStream));
 
     expect(store.getResearch(id)).toMatchObject({
       status: "done",
       report: validReport,
       companyName: "Acme Analytics",
-      inputTokens: 115,
+      inputTokens: 100,
       outputTokens: 50,
       searches: 1,
       pagesRead: 1,
@@ -85,89 +90,89 @@ describe("runResearchAgent", () => {
   });
 
   it("sends the configured model, tools and the user's request", async () => {
-    const claude = fakeClaude([turn([submit(validReport)], "tool_use")]);
-    await runResearchAgent(id, deps(claude.createStream));
+    const model = fakeModel([response([submit(validReport)])]);
+    await runResearchAgent(id, deps(model.createStream));
 
-    const [request] = claude.requests;
-    expect(request.model).toBe("claude-test");
-    expect(request.tools?.map((tool) => ("name" in tool ? tool.name : tool.type))).toEqual(["web_search", "web_fetch", "submit_report"]);
-    expect(request.tool_choice).toEqual({ type: "auto" });
-    const firstMessage = request.messages[0].content as string;
-    expect(firstMessage).toContain("<company>Acme Analytics</company>");
-    expect(firstMessage).toContain("<context>Selling onboarding software</context>");
+    const [request] = model.requests;
+    expect(request.model).toBe("gpt-test");
+    expect(request.previous_response_id).toBeNull();
+    expect(request.tools?.map((tool) => tool.type)).toEqual(["web_search", "function"]);
+    expect(request.tool_choice).toBe("auto");
+    expect(request.input).toContain("<company>Acme Analytics</company>");
+    expect(request.input).toContain("<context>Selling onboarding software</context>");
   });
 
-  it("resumes after pause_turn by resending the paused assistant turn", async () => {
-    const paused = turn([search("acme analytics")], "pause_turn");
-    const claude = fakeClaude([paused, turn([submit(validReport)], "tool_use")]);
+  it("reminds the model once, chaining on the previous response", async () => {
+    const first = response([message("Here is what I found…")]);
+    const model = fakeModel([first, response([submit(validReport)])]);
 
-    await runResearchAgent(id, deps(claude.createStream));
-
-    expect(store.getResearch(id)?.status).toBe("done");
-    expect(claude.requests[1].messages.at(-1)).toEqual({ role: "assistant", content: paused.content });
-  });
-
-  it("reminds the model once when it ends without submitting", async () => {
-    const claude = fakeClaude([
-      turn([text("Here is what I found…")], "end_turn"),
-      turn([submit(validReport)], "tool_use"),
-    ]);
-
-    await runResearchAgent(id, deps(claude.createStream));
+    await runResearchAgent(id, deps(model.createStream));
 
     expect(store.getResearch(id)?.status).toBe("done");
-    expect(claude.requests[1].messages.at(-1)?.role).toBe("user");
-    expect(String(claude.requests[1].messages.at(-1)?.content)).toContain("submit_report");
+    expect(model.requests[1].previous_response_id).toBe(first.id);
+    expect(JSON.stringify(model.requests[1].input)).toContain("submit_report");
   });
 
   it("fails if the model still doesn't submit after the reminder", async () => {
-    const claude = fakeClaude([turn([text("…")], "end_turn"), turn([text("…")], "end_turn")]);
-    await runResearchAgent(id, deps(claude.createStream));
+    const model = fakeModel([response([message("…")]), response([message("…")])]);
+    await runResearchAgent(id, deps(model.createStream));
     expect(store.getResearch(id)).toMatchObject({ status: "failed", error: expect.stringMatching(/without producing a brief/) });
   });
 
   it("returns validation errors to the model and accepts the corrected brief", async () => {
     const invalid = { ...validReport, sources: validReport.sources.slice(0, 1) };
-    const claude = fakeClaude([
-      turn([submit(invalid, "toolu_bad")], "tool_use"),
-      turn([submit(validReport)], "tool_use"),
-    ]);
+    const model = fakeModel([response([submit(invalid, "call_bad")]), response([submit(validReport)])]);
 
-    await runResearchAgent(id, deps(claude.createStream));
+    await runResearchAgent(id, deps(model.createStream));
 
     expect(store.getResearch(id)?.status).toBe("done");
-    const correction = claude.requests[1].messages.at(-1)?.content as Anthropic.Beta.BetaToolResultBlockParam[];
-    expect(correction[0]).toMatchObject({ type: "tool_result", tool_use_id: "toolu_bad", is_error: true });
-    expect(String(correction[0].content)).toContain("sources");
+    const [correction] = model.requests[1].input as OpenAI.Responses.ResponseInputItem.FunctionCallOutput[];
+    expect(correction).toMatchObject({ type: "function_call_output", call_id: "call_bad" });
+    expect(String(correction.output)).toContain("sources");
   });
 
-  it("fails when the brief is invalid twice", async () => {
-    const invalid = { ...validReport, sources: [] };
-    const claude = fakeClaude([turn([submit(invalid)], "tool_use"), turn([submit(invalid)], "tool_use")]);
-    await runResearchAgent(id, deps(claude.createStream));
+  it("strips citation markers from the stored brief", async () => {
+    const marked = { ...validReport, summary: `${validReport.summary} \uE200cite\uE202turn0search1\uE201` };
+    const model = fakeModel([response([submit(marked)])]);
+    await runResearchAgent(id, deps(model.createStream));
+    expect(store.getResearch(id)?.report).toEqual(validReport);
+  });
+
+  it("treats unparseable arguments as an invalid brief", async () => {
+    const broken = { type: "function_call", name: "submit_report", call_id: "c", arguments: "{oops" } as Item;
+    const model = fakeModel([response([broken]), response([broken])]);
+    await runResearchAgent(id, deps(model.createStream));
     expect(store.getResearch(id)?.error).toMatch(/didn't pass validation/);
   });
 
-  it("fails with a readable message when the model declines", async () => {
-    const claude = fakeClaude([turn([], "refusal")]);
-    await runResearchAgent(id, deps(claude.createStream));
+  it("fails with a readable message when the model refuses", async () => {
+    const model = fakeModel([response([refusal()])]);
+    await runResearchAgent(id, deps(model.createStream));
     expect(store.getResearch(id)).toMatchObject({ status: "failed", error: expect.stringMatching(/couldn't be completed/) });
   });
 
-  it("explains an invalid API key without leaking API details", async () => {
-    const apiError = new Anthropic.AuthenticationError(401, undefined, "invalid x-api-key", new Headers());
-    const claude = fakeClaude([apiError]);
+  it("fails when the response is cut off", async () => {
+    const model = fakeModel([
+      response([search("acme")], { status: "incomplete", incomplete_details: { reason: "max_output_tokens" } }),
+    ]);
+    await runResearchAgent(id, deps(model.createStream));
+    expect(store.getResearch(id)?.error).toMatch(/too long to finish/);
+  });
 
-    await runResearchAgent(id, deps(claude.createStream));
+  it("explains an invalid API key without leaking API details", async () => {
+    const apiError = new OpenAI.AuthenticationError(401, undefined, "Incorrect API key", new Headers());
+    const model = fakeModel([apiError]);
+
+    await runResearchAgent(id, deps(model.createStream));
 
     expect(store.getResearch(id)).toMatchObject({ status: "failed", error: expect.stringMatching(/API key was rejected/) });
   });
 
   it("stops quietly if the research is deleted mid-run", async () => {
-    const claude = fakeClaude([turn([search("acme analytics"), submit(validReport)], "tool_use")]);
+    const model = fakeModel([response([search("acme analytics"), submit(validReport)])]);
     const createStream: AgentDeps["createStream"] = (params) => {
       store.deleteResearch(id);
-      return claude.createStream(params);
+      return model.createStream(params);
     };
 
     await expect(runResearchAgent(id, deps(createStream))).resolves.toBeUndefined();
@@ -175,8 +180,8 @@ describe("runResearchAgent", () => {
   });
 
   it("does nothing for an unknown research id", async () => {
-    const claude = fakeClaude([]);
-    await runResearchAgent("missing", deps(claude.createStream));
-    expect(claude.requests).toHaveLength(0);
+    const model = fakeModel([]);
+    await runResearchAgent("missing", deps(model.createStream));
+    expect(model.requests).toHaveLength(0);
   });
 });

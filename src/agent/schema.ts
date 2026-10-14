@@ -46,9 +46,10 @@ export const ReportSchema = z.strictObject({
 
 export type Report = z.infer<typeof ReportSchema>;
 
-// Keywords strict tool use does not support; they are enforced by Zod on our side instead.
+// Keywords strict mode may not support; they are enforced by Zod on our side instead.
 const UNSUPPORTED_KEYWORDS = new Set([
   "$schema",
+  "format",
   "minItems",
   "maxItems",
   "minLength",
@@ -71,7 +72,7 @@ function stripUnsupported(node: unknown): unknown {
   );
 }
 
-/** JSON Schema for the `submit_report` tool input, limited to what strict mode accepts. */
+/** JSON Schema for the `submit_report` function parameters, limited to what strict mode accepts. */
 export function reportInputSchema(): { type: "object"; [key: string]: unknown } {
   const schema = stripUnsupported(z.toJSONSchema(ReportSchema)) as Record<string, unknown>;
   return { ...schema, type: "object" };

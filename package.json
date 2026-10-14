@@ -12,8 +12,8 @@
     "agent:try": "tsx scripts/try-agent.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.133.0",
     "next": "15.5.27",
+    "openai": "^7.33.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "zod": "^4.6.7"

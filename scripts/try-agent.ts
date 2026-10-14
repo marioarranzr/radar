@@ -5,9 +5,10 @@ import { runResearchAgent } from "@/agent/run";
 import { getStore } from "@/lib/db";
 import { getEnv } from "@/lib/env";
 
-// Rough list prices (USD) for the cost estimate printed at the end; not used by the app.
-const USD_PER_INPUT_TOKEN = 4 / 1_000_000;
-const USD_PER_OUTPUT_TOKEN = 20 / 1_000_000;
+// Rough list prices (USD, gpt-6.1-sol) for the cost estimate printed at the end; not used by the app.
+// Check https://openai.com/api/pricing for current prices, including the web search tool call fee.
+const USD_PER_INPUT_TOKEN = 2 / 1_000_000;
+const USD_PER_OUTPUT_TOKEN = 10 / 1_000_000;
 const USD_PER_WEB_SEARCH = 10 / 1_000;
 
 async function main() {
@@ -25,7 +26,7 @@ async function main() {
   const env = getEnv();
   const store = getStore();
   const id = store.createResearch({ query, context });
-  console.log(`Researching "${query}" with ${env.ANTHROPIC_MODEL} (id ${id})…\n`);
+  console.log(`Researching "${query}" with ${env.OPENAI_MODEL} (id ${id})…\n`);
 
   const startedAt = Date.now();
   let printed = 0;
