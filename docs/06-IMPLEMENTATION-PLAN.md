@@ -22,9 +22,9 @@
 **Done:** `npm run dev` shows a page with the right typography and colors; `npm test` and `npm run lint` pass.
 
 ## Phase 2 · Database
-- [ ] **P2.1** `db/schema.sql` (Backend §4).
-- [ ] **P2.2** `src/lib/db.ts` with the Backend §5 functions. Tests against SQLite `:memory:`: create, read, list, count today, steps, cascade delete.
-- [ ] **P2.3** SQL review with the `ecc:database-reviewer` agent.
+- [x] **P2.1** `db/schema.sql` (Backend §4).
+- [x] **P2.2** `src/lib/db.ts` with the Backend §5 functions. Tests against SQLite `:memory:`: create, read, list, count today, steps, cascade delete.
+- [x] **P2.3** SQL review with the `ecc:database-reviewer` agent.
 
 **Done:** `db.ts` tests pass and `data/radar.db` is created when the app starts.
 

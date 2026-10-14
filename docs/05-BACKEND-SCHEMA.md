@@ -96,9 +96,15 @@ CREATE INDEX IF NOT EXISTS idx_steps_research ON research_steps (research_id, id
 
 ## 5. Data access (`src/lib/db.ts`)
 
-- A single reused `DatabaseSync` connection (module-level singleton).
+- `openDatabase(path)` opens a `DatabaseSync` connection; `createStore(db)` wraps it with the functions below.
+  The app uses a single shared store via `getStore()` (module-level singleton); tests use `:memory:`.
+- The store is opened from `src/instrumentation.ts`, so the database file is created when the server starts.
 - On open: creates the `data/` folder if missing and runs `db/schema.sql` (idempotent thanks to `IF NOT EXISTS`).
 - All queries use prepared statements with `?` parameters.
+- `PRAGMA busy_timeout = 5000` so concurrent writers wait instead of failing.
+- The store is cached on `globalThis` so Next.js hot-reload and separate bundles share one connection.
+- `IF NOT EXISTS` never alters existing tables: a schema change on an existing `data/radar.db` needs a manual
+  `ALTER TABLE` (or deleting the local file) — note it in the commit that changes the schema.
 - Exposed functions (and nothing else):
 
 | Function | Used by |
@@ -106,10 +112,11 @@ CREATE INDEX IF NOT EXISTS idx_steps_research ON research_steps (research_id, id
 | `createResearch({ query, context })` → `id` | `POST /api/research` |
 | `getResearch(id)` → row + parsed `report` | Brief, polling |
 | `listResearch()` | History (most recent first) |
-| `countResearchToday()` | Daily limit |
-| `markRunning(id)` / `markDone(id, report, metrics)` / `markFailed(id, error)` | Agent |
-| `addStep(id, kind, label)` / `listSteps(id)` | Progress |
-| `resetForRetry(id)` | Retry: deletes steps, `status='queued'`, `error=NULL` |
+| `countResearchToday()` / `countResearchSince(iso)` | Daily limit |
+| `markRunning(id)` / `markDone(id, report, metrics)` / `markFailed(id, error, metrics?)` | Agent (each returns `false` if the row was deleted → the agent stops) |
+| `addStep(id, kind, label)` / `listSteps(id)` | Progress (`addStep` returns `false` if the row was deleted) |
+| `resetForRetry(id)` | Retry, **only if `status='failed'`**: deletes steps, clears error/report/metrics, `status='queued'`; returns `false` otherwise |
+| `failInterruptedRuns()` | On startup: rows left `queued`/`running` by a previous process → `failed` ("interrupted") |
 | `deleteResearch(id)` | Delete (steps go via CASCADE) |
 
 ## 6. Daily limit
@@ -129,7 +136,8 @@ A retry does **not** count against the limit (only created rows count).
 | Each tool used | agent | INSERT into `research_steps` |
 | Valid brief | agent | `status='done'`, `report`, `company_name`, metrics, `finished_at` |
 | Error | agent | `status='failed'`, `error`, `finished_at` |
-| Retry | `POST /api/research/[id]/retry` | `resetForRetry` and relaunches the agent |
+| Retry | `POST /api/research/[id]/retry` | `resetForRetry` (only from `failed`) and relaunches the agent |
+| Server restart | `getStore()` on startup | `queued`/`running` rows → `failed` with an "interrupted" error |
 | Delete | `DELETE /api/research/[id]` | DELETE row + steps |
 
 ## 8. Backups
