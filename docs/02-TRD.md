@@ -16,7 +16,7 @@
 | Styling | Tailwind CSS | 4.x | No component library: the (few) components are hand-written |
 | Database | **SQLite via `node:sqlite`** (Node built-in module) | — | A local file, nothing to install, no server |
 | LLM | Claude API via `@anthropic-ai/sdk` | latest | Official SDK |
-| Validation | Zod | 3.x | Validates inputs and the agent's output |
+| Validation | Zod | 4.x | Validates inputs and the agent's output; built-in JSON Schema export |
 | Tests | Vitest + Testing Library | — | Fast, standard |
 | Package manager | npm | Node's | Already installed |
 | Runtime environment | Local: `npm run dev` | — | No hosting in the MVP |
@@ -184,4 +184,5 @@ tests/
 | 2026-10-14 | **No component library** (hand-written Tailwind) | shadcn/ui | Fewer dependencies; only a few components |
 | 2026-10-14 | npm | pnpm | Ships with Node |
 | 2026-10-14 | Add `@testing-library/dom` | — | Required peer dependency of `@testing-library/react` |
+| 2026-10-14 | Zod 4 instead of 3 | Zod 3 + `zod-to-json-schema` | `z.toJSONSchema()` is built in: one dependency fewer |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |
