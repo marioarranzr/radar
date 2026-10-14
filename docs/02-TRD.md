@@ -23,7 +23,7 @@
 
 ### Allowed dependencies (closed list)
 - **Runtime:** `next`, `react`, `react-dom`, `@anthropic-ai/sdk`, `zod`
-- **Development:** `typescript`, `@types/*`, `tailwindcss` (+ its PostCSS plugin), `eslint` (+ Next config), `vitest`, `@testing-library/react`, `@testing-library/dom`, `jsdom`
+- **Development:** `typescript`, `@types/*`, `tailwindcss` (+ its PostCSS plugin), `eslint` (+ Next config), `vitest`, `@testing-library/react`, `@testing-library/dom`, `jsdom`, `tsx`
 - Anything else → goes through the Decision log.
 
 ## 2. Architecture
@@ -189,4 +189,5 @@ tests/
 | 2026-10-14 | Add `@testing-library/dom` | — | Required peer dependency of `@testing-library/react` |
 | 2026-10-14 | Zod 4 instead of 3 | Zod 3 + `zod-to-json-schema` | `z.toJSONSchema()` is built in: one dependency fewer |
 | 2026-10-14 | `submit_report` without `eager_input_streaming` | Eager input streaming | The brief is small; eager streaming disables server-side validation, losing the `strict` schema guarantee |
+| 2026-10-14 | `tsx` to run `scripts/` | `node --experimental-strip-types` | Node can't resolve the `@/` path alias; `tsx` honours tsconfig paths |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |

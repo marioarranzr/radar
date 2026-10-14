@@ -33,7 +33,7 @@
 - [x] **P3.2** `agent/prompt.ts`: system prompt (TRD §3.4) and user message builder (query + context inside tags).
 - [x] **P3.3** `agent/steps.ts`: translates `server_tool_use` blocks into `{ kind, label }`. Tests with fixtures.
 - [x] **P3.4** `agent/run.ts`: full `runResearchAgent(id)` — streaming, tools, `pause_turn`, reminder if there's no `submit_report`, Zod validation, writing to SQLite, `usage`, errors by type (TRD §3, §7).
-- [ ] **P3.5** Script `scripts/try-agent.ts "Company name"` (run with `node --experimental-strip-types`, or `npx tsx` if needed → record the decision) that creates a row and runs the agent from the terminal.
+- [x] **P3.5** Script `scripts/try-agent.ts "Company name"` (`npm run agent:try -- "Company"`, runs with `tsx`) that creates a row and runs the agent from the terminal.
 - [ ] **P3.6** Try it with 3 real companies; record one response as a fixture (review it for secrets first) and write a `run.ts` test that doesn't call the API.
 
 **Done:** the script produces a valid brief in `research.report` with ≥ 3 sources, in < 2 min, and records tokens. The `run.ts` test passes offline.
