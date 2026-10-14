@@ -16,7 +16,7 @@ The user **never writes a prompt**. They type a name and press a button. All the
 "knowing how to ask the AI" is encapsulated in the product. That is the value of the middle layer.
 
 **MVP = a personal tool that runs on my computer.** No users, no login, no external services
-other than the Claude API. Data lives in a local SQLite file.
+other than the OpenAI API. Data lives in a local SQLite file.
 
 ## 2. Problem
 

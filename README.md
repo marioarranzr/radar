@@ -3,8 +3,8 @@
 A learning project in agent automation **and** a documentation template for future
 AI-built projects.
 
-Type a company name and a Claude agent researches it on the web and hands you a one-page
-brief with cited sources. Runs locally: Next.js + SQLite (`node:sqlite`) + Claude API.
+Type a company name and an AI agent researches it on the web and hands you a one-page
+brief with cited sources. Runs locally: Next.js + SQLite (`node:sqlite`) + OpenAI Responses API.
 
 > Status: documentation complete, implementation in progress (see the [plan](docs/06-IMPLEMENTATION-PLAN.md)).
 

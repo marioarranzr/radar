@@ -25,11 +25,11 @@ If code and a document disagree, the document wins (or the document is updated f
 - **If a decision changes** (e.g. a different library), first propose the change in the relevant doc,
   add an entry to the TRD "Decision log", and only then change the code.
 - **This repository is PUBLIC.** Before every commit, review `git diff --cached` and make sure none of
-  these get in: keys or tokens (`sk-ant-`…), `.env*` files (except the empty `.env.example`), `data/`
+  these get in: keys or tokens (`sk-`…), `.env*` files (except the empty `.env.example`), `data/`
   (the database), logs, absolute paths from my machine, emails or personal data. If in doubt, do not
   commit — ask.
 - **Secrets:** never in code, tests, fixtures or commits. Only in `.env.local` (and `.env.example`
-  without values). Claude responses recorded as fixtures are reviewed before committing.
+  without values). Model responses recorded as fixtures are reviewed before committing.
 - **Tests:** every step with logic (not just UI) gets at least one test. TDD whenever feasible.
 
 ## Workflow with the ECC plugin

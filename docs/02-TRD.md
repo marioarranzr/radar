@@ -2,7 +2,7 @@
 
 > **Closed** decisions. The implementing agent must not choose alternatives without
 > going through the "Decision log" first (section 9).
-> **MVP principle:** zero external services other than the Claude API, and the fewest possible npm dependencies.
+> **MVP principle:** zero external services other than the OpenAI API, and the fewest possible npm dependencies.
 
 ---
 
@@ -15,14 +15,14 @@
 | Web framework | Next.js (App Router) | 15.x | Front end + API in a single project |
 | Styling | Tailwind CSS | 4.x | No component library: the (few) components are hand-written |
 | Database | **SQLite via `node:sqlite`** (Node built-in module) | — | A local file, nothing to install, no server |
-| LLM | Claude API via `@anthropic-ai/sdk` | latest | Official SDK |
+| LLM | OpenAI Responses API via `openai` | 7.x | Official SDK |
 | Validation | Zod | 4.x | Validates inputs and the agent's output; built-in JSON Schema export |
 | Tests | Vitest + Testing Library | — | Fast, standard |
 | Package manager | npm | Node's | Already installed |
 | Runtime environment | Local: `npm run dev` | — | No hosting in the MVP |
 
 ### Allowed dependencies (closed list)
-- **Runtime:** `next`, `react`, `react-dom`, `@anthropic-ai/sdk`, `zod`
+- **Runtime:** `next`, `react`, `react-dom`, `openai`, `zod`
 - **Development:** `typescript`, `@types/*`, `tailwindcss` (+ its PostCSS plugin), `eslint` (+ Next config), `vitest`, `@testing-library/react`, `@testing-library/dom`, `jsdom`, `tsx`
 - Anything else → goes through the Decision log.
 
@@ -35,7 +35,7 @@ Browser ──(1) POST /api/research──▶ Next.js Route Handler (on my machi
     │                                    │ responds { id } immediately
     │                                    ▼
     │                         after(): runResearchAgent(id)   ← runs after responding
-    │                                    │ agent loop with Claude
+    │                                    │ agent loop with OpenAI
     │                                    │ INSERT research_steps (progress)
     │                                    │ UPDATE research.report + status
     │                                    ▼
@@ -49,37 +49,34 @@ Browser ──(1) POST /api/research──▶ Next.js Route Handler (on my machi
 ## 3. The agent (core of the project)
 
 ### 3.1 Agent type
-**Claude API + server tools** (web search and web fetch are executed by Anthropic).
-We don't need our own client-side tool loop in the MVP, except for the final
-`submit_report` tool used to get the structured brief.
+**OpenAI Responses API + the built-in `web_search` tool** (searching and opening pages run on OpenAI's side).
+The only function tool is `submit_report`, used to get the structured brief. Turns are chained with
+`previous_response_id`, so the full history is not resent.
 
 ### 3.2 Request configuration
 
 | Parameter | Value |
 |---|---|
-| `model` | `claude-opus-5-5` (configurable via `ANTHROPIC_MODEL`) |
-| `thinking` | `{ type: "adaptive" }` |
-| `output_config.effort` | `"medium"` (raise to `high` if quality doesn't reach O1) |
-| `max_tokens` | 64000 (streaming: `client.messages.stream(...).finalMessage()`) |
-| Fallback on `refusal` | `betas: ["server-side-fallback-2026-07-01"]`, `fallbacks: "default"` |
-| Budget | `output_config.task_budget = { type: "tokens", total: 60000 }` (beta `task-budgets-2026-03-13`) |
+| `model` | `gpt-6.1-sol` (configurable via `OPENAI_MODEL`; `gpt-6-astra` for maximum quality) |
+| `reasoning.effort` | `"medium"` (raise to `high` if quality doesn't reach O1) |
+| `max_output_tokens` | 32000 |
+| `instructions` | The static system prompt (§3.4) |
+| Streaming | `client.responses.create({ ..., stream: true })`, reading raw events (`src/agent/openai-stream.ts`): progress from `response.output_item.done`, the final response from `response.completed` / `response.incomplete` |
 
 ### 3.3 Tools
 
 | Tool | Type | Config |
 |---|---|---|
-| Web search | `web_search_20260209` (server) | `max_uses: 6` |
-| Web fetch | `web_fetch_20260209` (server) | `max_uses: 8`, `max_content_tokens: 8000` |
-| `submit_report` | Client, `strict: true` | `input_schema` = `ReportSchema` (section 3.5) |
+| Web search | `web_search` (built-in) | `search_context_size: "medium"`; reasoning models can also `open_page` and `find_in_page` |
+| `submit_report` | `function`, `strict: true` | `parameters` = `ReportSchema` as JSON Schema (§3.5) |
 
-- `tool_choice: { type: "auto" }` (forced tool choice returns a 400 on this model). The system prompt
-  states that it **must** finish by calling `submit_report`.
-- If the turn ends with `stop_reason: "pause_turn"`, the conversation is resent so it can continue.
-- If it ends without calling `submit_report`, it is resent once with a reminder message; if it fails
-  again → `status='failed'`.
-- If the `submit_report` input fails Zod validation, the issues are returned once as an `is_error`
-  `tool_result` so the model can correct it; a second invalid brief → `status='failed'`.
-- At most 8 requests per run; `stop_reason: "refusal"` or `"max_tokens"` → `status='failed'`.
+- `tool_choice: "auto"`. The instructions state that the model **must** finish by calling `submit_report`.
+- If the response ends without calling `submit_report`, a reminder is sent once (chained with
+  `previous_response_id`); if it fails again → `status='failed'`.
+- If the `submit_report` arguments fail Zod validation, the issues are returned once as the
+  `function_call_output`; a second invalid brief → `status='failed'`.
+- At most 8 requests per run. `status: "incomplete"` (`max_output_tokens`, `content_filter`) or a
+  `refusal` content part → `status='failed'`.
 
 ### 3.4 System prompt (summary; full version in `src/agent/prompt.ts`)
 - Role: B2B research analyst.
@@ -105,11 +102,15 @@ We don't need our own client-side tool loop in the MVP, except for the final
   sources: { title: string, url: string }[]                          // min 3
 }
 ```
-The `submit_report` input is validated again with Zod on the server before saving it.
+The `submit_report` arguments are parsed and validated again with Zod on the server before saving.
+Keywords strict mode may not support (length/size bounds, `format`) are dropped from the schema sent
+to the model and enforced by Zod instead. Before validation, OpenAI's internal citation markers
+(private-use characters such as `\uE200cite…\uE201`) are stripped from every string (`src/agent/sanitize.ts`).
 
 ### 3.6 Progress
-Each `server_tool_use` block that appears in the streamed response is translated into a readable step
-("Searching: “acme pricing”", "Reading: acme.com/about") and inserted into `research_steps`.
+Each finished `web_search_call` item is translated into a readable step: `search` →
+"Searching: “acme pricing”", `open_page` → "Reading: acme.com/about", `find_in_page` →
+"Scanning: acme.com/pricing". The `submit_report` call becomes "Writing the brief".
 
 ## 4. Own APIs (Route Handlers)
 
@@ -128,8 +129,8 @@ rebinding) and non-GET requests with a non-local `Origin` are rejected with 403 
 ## 5. Environment variables (`.env.local`)
 
 ```
-ANTHROPIC_API_KEY=             # required, server only
-ANTHROPIC_MODEL=claude-opus-5-5
+OPENAI_API_KEY=                # required, server only
+OPENAI_MODEL=gpt-6.1-sol
 DAILY_RESEARCH_LIMIT=10
 DATABASE_PATH=./data/radar.db
 ```
@@ -166,7 +167,7 @@ tests/
   The UI renders every report string as plain React text (never `dangerouslySetInnerHTML` or Markdown→HTML),
   shows each link's hostname, and opens links with `rel="noopener noreferrer"`.
 - **Cost:** record `usage` (input/output tokens) in `research` to compute O4.
-- **Errors:** catch by type (`RateLimitError`, `APIStatusError`, `APIConnectionError`)
+- **Errors:** catch by type (`AuthenticationError`, `RateLimitError`, `APIConnectionError`, `APIError`)
   and store a readable message in `research.error`.
 - **Accessibility:** WCAG AA contrast and keyboard navigation.
 - **Clean start:** if `data/radar.db` doesn't exist, it is created from `db/schema.sql` on first access.
@@ -175,7 +176,7 @@ tests/
 ## 8. Testing
 
 - Unit: `schema.ts`, `steps.ts`, `db.ts` (with an `:memory:` database), route validation, daily limit.
-- Agent: test with **recorded** Claude responses (fixtures), without calling the real API.
+- Agent: test with **scripted** model responses (a fake stream), without calling the real API.
 - Manual evaluation: 10 well-known companies, rated useful / not useful (O1).
 - E2E with Playwright: **out of the MVP** (it would be one more dependency).
 
@@ -183,7 +184,7 @@ tests/
 
 | Date | Decision | Rejected alternatives | Reason |
 |---|---|---|---|
-| 2026-10-14 | Anthropic server-side web tools | Tavily/SerpAPI + custom scraping | Less code, fewer keys |
+| 2026-10-14 | Provider-hosted web search tool | Tavily/SerpAPI + custom scraping | Less code, fewer keys |
 | 2026-10-14 | `after()` instead of a queue | Inngest, Managed Agents | Enough for the MVP |
 | 2026-10-14 | Output via a `submit_report` tool with `strict` | Parsing Markdown | Guaranteed structure |
 | 2026-10-14 | **No users or login; local personal use** | Supabase Auth | The MVP is just for me; fewer moving parts |
@@ -193,6 +194,7 @@ tests/
 | 2026-10-14 | npm | pnpm | Ships with Node |
 | 2026-10-14 | Add `@testing-library/dom` | — | Required peer dependency of `@testing-library/react` |
 | 2026-10-14 | Zod 4 instead of 3 | Zod 3 + `zod-to-json-schema` | `z.toJSONSchema()` is built in: one dependency fewer |
-| 2026-10-14 | `submit_report` without `eager_input_streaming` | Eager input streaming | The brief is small; eager streaming disables server-side validation, losing the `strict` schema guarantee |
+| 2026-10-14 | **Switch the LLM provider from Anthropic (Claude) to OpenAI** — Responses API, `web_search`, `gpt-6.1-sol` | Claude API (`claude-opus-5-5`) | Owner's decision. `gpt-6.1-sol` is half the price per token, and `web_search` can also open pages, so one tool replaces web search + web fetch |
+| 2026-10-14 | Read raw stream events instead of the SDK's `responses.stream()` helper | `client.responses.stream()` | The helper's accumulator throws on valid sequences ("expected output item type 'message', got 'function_call'"); the terminal event already carries the full response |
 | 2026-10-14 | `tsx` to run `scripts/` | `node --experimental-strip-types` | Node can't resolve the `@/` path alias; `tsx` honours tsconfig paths |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |

@@ -7,11 +7,11 @@
 ---
 
 ## Phase 0 · Setup (manual, I do it)
-- [ ] **P0.1** Full Anthropic key in `.env.local` (console.anthropic.com) and a monthly spend limit (e.g. $10).
+- [x] **P0.1** OpenAI API key in `.env.local` (platform.openai.com → API keys) and a monthly spend limit (e.g. $10).
 - [x] **P0.2** Create the `radar` repo on GitHub (**public**), local `git init`, check that no `.env*` gets pushed, first commit with `docs/`, `CLAUDE.md`, `README.md`, `.gitignore`, `.env.example`.
 
 **Done:** `git status` clean, the remote repo has the docs and contains **no** keys
-(checked with `git ls-files` and by searching the history for `sk-ant-`).
+(checked with `git ls-files` and by searching the history for `sk-`).
 
 ## Phase 1 · Skeleton
 - [x] **P1.1** `npx create-next-app@latest` in the current folder (TS, App Router, Tailwind, ESLint, `src/`). Adjust to the TRD §6 structure.
@@ -31,10 +31,10 @@
 ## Phase 3 · The agent (in isolation, no UI)
 - [x] **P3.1** `agent/schema.ts`: `ReportSchema` in Zod + conversion to JSON Schema. Tests: accepts a valid example, rejects no sources / >5 signals.
 - [x] **P3.2** `agent/prompt.ts`: system prompt (TRD §3.4) and user message builder (query + context inside tags).
-- [x] **P3.3** `agent/steps.ts`: translates `server_tool_use` blocks into `{ kind, label }`. Tests with fixtures.
-- [x] **P3.4** `agent/run.ts`: full `runResearchAgent(id)` — streaming, tools, `pause_turn`, reminder if there's no `submit_report`, Zod validation, writing to SQLite, `usage`, errors by type (TRD §3, §7).
+- [x] **P3.3** `agent/steps.ts`: translates `web_search_call` items into `{ kind, label }`. Tests with fixtures.
+- [x] **P3.4** `agent/run.ts`: full `runResearchAgent(id)` — streaming, tools, chained turns, reminder if there's no `submit_report`, Zod validation, writing to SQLite, `usage`, errors by type (TRD §3, §7).
 - [x] **P3.5** Script `scripts/try-agent.ts "Company name"` (`npm run agent:try -- "Company"`, runs with `tsx`) that creates a row and runs the agent from the terminal.
-- [ ] **P3.6** Try it with 3 real companies; record one response as a fixture (review it for secrets first) and write a `run.ts` test that doesn't call the API.
+- [x] **P3.6** Try it with 3 real companies and tune the prompt; the `run.ts` tests drive the loop with a scripted fake stream, so they never call the API.
 
 **Done:** the script produces a valid brief in `research.report` with ≥ 3 sources, in < 2 min, and records tokens. The `run.ts` test passes offline.
 
