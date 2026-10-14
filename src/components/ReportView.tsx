@@ -55,7 +55,11 @@ export function ReportView({
     <Card className="sm:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 tabIndex={-1} data-focus-on-ready className="text-[28px] leading-tight font-semibold">
+          <h1
+            tabIndex={-1}
+            data-focus-on-ready
+            className="text-[28px] leading-tight font-semibold focus:outline-none"
+          >
             {report.company_name}
           </h1>
           <p className="mt-1 flex flex-wrap gap-x-3 font-mono text-[13px] text-muted">

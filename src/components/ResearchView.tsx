@@ -166,7 +166,11 @@ export function ResearchView({
   return (
     <div ref={container} className="flex flex-col items-start gap-4">
       <AlertIcon className="size-8 text-danger" />
-      <h1 tabIndex={-1} data-focus-on-ready className="text-[28px] leading-tight font-semibold">
+      <h1
+        tabIndex={-1}
+        data-focus-on-ready
+        className="text-[28px] leading-tight font-semibold focus:outline-none"
+      >
         We couldn&apos;t complete the research
       </h1>
       <p className="text-muted">
