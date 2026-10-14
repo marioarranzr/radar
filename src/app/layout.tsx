@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
+import { Header } from "@/components/Header";
+import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
 const inter = Inter({
@@ -32,7 +34,10 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        {children}
+        <ToastProvider>
+          <Header />
+          <main className="mx-auto max-w-[720px] px-4 py-10 sm:px-8">{children}</main>
+        </ToastProvider>
       </body>
     </html>
   );

@@ -49,13 +49,13 @@
 **Done:** with `curl` I can create, fetch, retry and delete; tests pass.
 
 ## Phase 5 · Interface
-- [ ] **P5.1** Hand-written Tailwind base components: `Button`, `Input`, `Textarea`, `Badge`, `Card`, `ConfirmDialog` (native `<dialog>`), `Toast`, `StepList`.
-- [ ] **P5.2** `/` Block A: new research form with counter and states (Flow P1).
-- [ ] **P5.3** `/` Block B: history, empty state, delete with dialog.
-- [ ] **P5.4** `/research/[id]` Progress state with `StepList` + polling every 2 s + timer.
-- [ ] **P5.5** Brief state: the 8 sections, "unconfirmed", "Copy Markdown", metrics footer.
-- [ ] **P5.6** Error state with Retry; 404 page.
-- [ ] **P5.7** Responsive (375 px) and dark mode pass. → `/ecc:react-review` + `ecc:a11y-architect` agent.
+- [x] **P5.1** Hand-written Tailwind base components: `Button`, `Input`, `Textarea`, `Badge`, `Card`, `ConfirmDialog` (native `<dialog>`), `Toast`, `StepList`.
+- [x] **P5.2** `/` Block A: new research form with counter and states (Flow P1).
+- [x] **P5.3** `/` Block B: history, empty state, delete with dialog.
+- [x] **P5.4** `/research/[id]` Progress state with `StepList` + polling every 2 s + timer.
+- [x] **P5.5** Brief state: the 8 sections, "unconfirmed", "Copy Markdown", metrics footer.
+- [x] **P5.6** Error state with Retry; 404 page.
+- [x] **P5.7** Responsive (375 px) and dark mode pass. → `/ecc:react-review` + `ecc:a11y-architect` agent.
 
 **Done:** the full happy path (Flow §4) works locally, in a narrow window and in dark mode.
 
