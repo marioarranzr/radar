@@ -60,8 +60,8 @@
 **Done:** the full happy path (Flow §4) works locally, in a narrow window and in dark mode.
 
 ## Phase 6 · Quality
-- [ ] **P6.1** Manual evaluation: 10 companies, note useful/not useful, time and cost in `docs/eval-results.md`. Tune prompt/effort until O1-O4 from the PRD are met.
-- [ ] **P6.2** README with screenshots, how to run it and "what I learned". `/ecc:save-session`.
+- [ ] **P6.1** Manual evaluation: 10 companies, note useful/not useful, time and cost in `docs/eval-results.md`. Tune prompt/effort until O1-O4 from the PRD are met. _(First run done with `npm run agent:eval`: O2 and O3 met, O4 12 % over, O1 awaiting the owner's rating.)_
+- [x] **P6.2** README with screenshots, how to run it and "what I learned". `/ecc:save-session`.
 
 **Done:** goals O1-O4 measured and recorded; anyone can clone the repo and run it by following the README.
 
