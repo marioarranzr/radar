@@ -21,10 +21,22 @@
 
 | Goal | Target | Result | Status |
 |---|---|---|---|
-| O1 Useful briefs | ≥ 8/10 rated useful | Pending the owner's rating (last column) | ⏳ |
+| O1 Useful briefs | ≥ 8/10 rated useful | Automated quality checks pass 10/10 (below); the owner's usefulness rating is pending | ⏳ |
 | O2 Fast | p50 ≤ 90 s | p50 **70 s** (max 96 s) | ✅ |
 | O3 Reliable | 100 % with ≥ 3 sources | **10/10**, 8–15 sources each | ✅ |
 | O4 Cheap | avg ≤ $0.15 | avg **$0.168** (upper bound) | ⚠️ 12 % over |
+
+## Automated quality checks
+
+Checked on 2026-10-15 against the stored briefs (no model involved):
+
+| Check | Result |
+|---|---|
+| All sections present (3–5 questions, ≤ 5 signals, key facts, pains) | 10/10 briefs |
+| Recent signals dated within the last 12 months | 50/50 signals |
+| Cited URLs that return 404/410 (likely invented) | **0 of 117** |
+| Cited URLs that load (2xx/3xx) | 89 of 117 |
+| Cited URLs not verifiable automatically (bot protection or timeout, e.g. all Personio pages) | 28 of 117 |
 
 ## Observations
 
