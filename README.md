@@ -1,5 +1,7 @@
 # Radar — company research agent
 
+[![CI](https://github.com/marioarranzr/radar/actions/workflows/ci.yml/badge.svg)](https://github.com/marioarranzr/radar/actions/workflows/ci.yml)
+
 > **Built with agent automation, end to end:** an AI agent does the research inside the product,
 > and AI coding agents wrote the code — directed through specs, a step-by-step plan and review
 > agents. [How and why ↓](#agent-automation-twice)
