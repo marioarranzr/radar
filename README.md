@@ -4,8 +4,40 @@ Type a company name; an AI agent searches the web, reads the relevant pages and 
 **one-page brief with cited sources** in about a minute: what they sell and to whom, business
 model, key facts, recent signals, likely pains and questions for a first call.
 
-It's a small, local, single-user tool built to learn agent automation end to end — and a
-**documentation-first template** for building software with AI coding agents.
+## Agent automation, twice
+
+**1. In the product — an agent, not a chatbot.**
+Preparing for a sales call means 20–40 minutes of tabs: website, news, funding, job posts.
+A chat assistant helps, but only if you know what to ask, the format changes every time and
+nothing is kept. Radar sits in the layer between the model and the user: the user types a name,
+and the product owns everything else.
+
+- **The model decides the path.** Which searches to run, which pages to open, when it has enough —
+  that's open-ended, multi-step work a fixed pipeline can't anticipate. That's why it's an agent.
+- **The code owns the guardrails.** A strict output schema, validation with one self-correction
+  turn, a reminder if the model stops early, capped turns, a daily budget, readable failures and a
+  retry. The model is creative; the system around it is deterministic.
+- **It's measured, not demoed.** An evaluation script runs it on real companies and tracks
+  success rate, latency, sources and cost per brief ([results](docs/eval-results.md)):
+  10/10 valid briefs, median 70 s.
+
+**2. In how it was built — AI coding agents, directed like a team.**
+The code was written by AI coding agents (Claude Code); my job was the part that doesn't
+automate: deciding what to build and holding the work to a standard.
+
+- **Specs before code.** Six documents — product, technical, flow, design, data, plan — define
+  the work, and a [CLAUDE.md](CLAUDE.md) tells the agents how to use them.
+- **One plan step, one commit.** The history reads like the plan, and every decision that changed
+  (switching LLM provider, dropping a database service) is recorded in the
+  [decision log](docs/02-TRD.md#9-decision-log-lightweight-adr) before the code changed.
+- **Specialised reviewers.** Database, code, security, React and accessibility review agents
+  checked every phase; their real findings (a dev server exposed to the LAN, a DST bug in the
+  daily limit, contrast failures) were fixed and are explained in the commit messages.
+- **Tests as the safety net.** 107 tests, including the agent loop driven by a scripted fake model,
+  so behaviour is verified without paying for API calls.
+
+The result doubles as a **reusable template** for building software with AI agents — see
+[Built document-first](#built-document-first).
 
 <p align="center">
   <img src="docs/images/brief.jpg" alt="A Radar brief for a company, with summary, key facts and sources" width="720">
@@ -89,9 +121,6 @@ Every feature was specified before it was coded. AI coding agents read these in 
 | [04-DESIGN-BRIEF](docs/04-DESIGN-BRIEF.md) | How it looks — tokens, typography, components, screens |
 | [05-BACKEND-SCHEMA](docs/05-BACKEND-SCHEMA.md) | Where data lives — tables, columns, lifecycle |
 | [06-IMPLEMENTATION-PLAN](docs/06-IMPLEMENTATION-PLAN.md) | In what order — steps with a "done" criterion |
-
-Each phase was also reviewed by specialised review agents (database, code, security, React,
-accessibility) before committing. Their findings — and the fixes — are in the commit messages.
 
 **Use it as a template:** copy `CLAUDE.md` and `docs/`, rewrite the docs in order (01 → 06),
 then ask your agent to list contradictions between them before writing any code.
