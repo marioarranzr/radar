@@ -1,5 +1,9 @@
 # Radar — company research agent
 
+> **Built with agent automation, end to end:** an AI agent does the research inside the product,
+> and AI coding agents wrote the code — directed through specs, a step-by-step plan and review
+> agents. [How and why ↓](#agent-automation-twice)
+
 Type a company name; an AI agent searches the web, reads the relevant pages and hands you a
 **one-page brief with cited sources** in about a minute: what they sell and to whom, business
 model, key facts, recent signals, likely pains and questions for a first call.
