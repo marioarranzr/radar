@@ -25,6 +25,7 @@ vi.mock("next/server", async (importOriginal) => ({
 const { POST: createResearch } = await import("@/app/api/research/route");
 const { GET: getResearch, DELETE: deleteResearch } = await import("@/app/api/research/[id]/route");
 const { POST: retryResearch } = await import("@/app/api/research/[id]/retry/route");
+const { POST: createBatch } = await import("@/app/api/research/batch/route");
 
 const post = (body: unknown, contentType = "application/json") =>
   new Request("http://localhost/api/research", {
@@ -181,3 +182,39 @@ describe("POST /api/research/[id]/retry", () => {
     expect(mocks.store.countResearchToday()).toBe(1);
   });
 });
+
+describe("POST /api/research/batch", () => {
+  const batch = (queries: unknown) =>
+    new Request("http://localhost/api/research/batch", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ queries }),
+    });
+
+  it("queues every company within the daily limit", async () => {
+    const response = await createBatch(batch(["Acme", "Globex", "acme"]));
+
+    expect(response.status).toBe(200);
+    const { ids } = await response.json();
+    expect(ids).toHaveLength(2);
+    expect(mocks.store.listResearch().map((r) => r.query).sort()).toEqual(["Acme", "Globex"]);
+    expect(mocks.after).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects the whole batch when it exceeds what's left today", async () => {
+    await createResearch(post({ query: "Already done" }));
+
+    const response = await createBatch(batch(["Acme", "Globex"]));
+
+    expect(response.status).toBe(429);
+    expect((await response.json()).error).toBe("Only 1 research left today; you sent 2.");
+    expect(mocks.store.listResearch()).toHaveLength(1);
+  });
+
+  it("validates the list", async () => {
+    const response = await createBatch(batch([]));
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toBe("Add at least one company.");
+  });
+});
+
