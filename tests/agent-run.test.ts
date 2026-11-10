@@ -69,6 +69,12 @@ describe("runResearchAgent", () => {
     expect(request.input).toContain("<context>Selling onboarding software</context>");
   });
 
+  it("uses the configured search context size", async () => {
+    const model = fakeModel([response([submit(validReport)])]);
+    await runResearchAgent(id, { ...deps(model.createStream), searchContextSize: "low" });
+    expect(model.requests[0].tools?.[0]).toEqual({ type: "web_search", search_context_size: "low" });
+  });
+
   it("reminds the model once, chaining on the previous response", async () => {
     const first = response([message("Here is what I found…")]);
     const model = fakeModel([first, response([submit(validReport)])]);

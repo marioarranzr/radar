@@ -13,6 +13,8 @@ const EnvSchema = z.object({
     (value) => (value === undefined || value === "" ? true : !["false", "0", "no", "off"].includes(String(value).toLowerCase())),
     z.boolean(),
   ),
+  // How much web content each search returns to the researcher (the main cost driver).
+  SEARCH_CONTEXT_SIZE: z.enum(["low", "medium", "high"]).default("medium"),
   DAILY_RESEARCH_LIMIT: z.coerce.number().int().positive().default(10),
   DATABASE_PATH: z.string().min(1).default("./data/radar.db"),
 });

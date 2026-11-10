@@ -67,7 +67,7 @@ The only function tool is `submit_report`, used to get the structured brief. Tur
 
 | Tool | Type | Config |
 |---|---|---|
-| Web search | `web_search` (built-in) | `search_context_size: "medium"`; reasoning models can also `open_page` and `find_in_page` |
+| Web search | `web_search` (built-in) | `search_context_size` from `SEARCH_CONTEXT_SIZE` (default `"medium"`); reasoning models can also `open_page` and `find_in_page` |
 | `submit_report` | `function`, `strict: true` | `parameters` = `ReportSchema` as JSON Schema (§3.5) |
 
 - `tool_choice: "auto"`. The instructions state that the model **must** finish by calling `submit_report`.
@@ -188,6 +188,7 @@ OPENAI_API_KEY=                # required, server only
 OPENAI_MODEL=gpt-6.1-sol
 JUDGE_MODEL=                  # optional, evaluation only; defaults to OPENAI_MODEL
 VERIFY_BRIEFS=true            # run the verifier agent after each research
+SEARCH_CONTEXT_SIZE=medium    # low | medium | high: web content per search (the main cost driver)
 DAILY_RESEARCH_LIMIT=10
 DATABASE_PATH=./data/radar.db
 ```

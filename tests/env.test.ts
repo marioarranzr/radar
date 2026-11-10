@@ -9,6 +9,7 @@ describe("parseEnv", () => {
       OPENAI_API_KEY: validKey,
       OPENAI_MODEL: "gpt-6.1-sol",
       VERIFY_BRIEFS: true,
+      SEARCH_CONTEXT_SIZE: "medium",
       DAILY_RESEARCH_LIMIT: 10,
       DATABASE_PATH: "./data/radar.db",
     });
