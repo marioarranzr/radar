@@ -67,6 +67,24 @@
   }
 }
 
+/* Print / PDF export: a clean document on white paper (docs/04-DESIGN-BRIEF.md §8). */
+@media print {
+  :root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --text: #000000;
+    --text-muted: #444444;
+  }
+  main {
+    max-width: none;
+    padding: 0;
+  }
+  li,
+  dd {
+    break-inside: avoid;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

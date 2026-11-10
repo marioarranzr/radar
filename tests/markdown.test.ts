@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reportToMarkdown } from "@/lib/markdown";
+import { markdownFilename, reportToMarkdown } from "@/lib/markdown";
 import { validReport } from "./fixtures/report";
 
 describe("reportToMarkdown", () => {
@@ -45,3 +45,12 @@ describe("reportToMarkdown safety", () => {
     expect(markdown).toContain("1. Bad");
   });
 });
+
+describe("markdownFilename", () => {
+  it("slugifies the company name", () => {
+    expect(markdownFilename({ ...validReport, company_name: "Holded Technologies, S.L." })).toBe("holded-technologies-s-l.md");
+    expect(markdownFilename({ ...validReport, company_name: "Café Ñandú" })).toBe("cafe-nandu.md");
+    expect(markdownFilename({ ...validReport, company_name: "株式会社" })).toBe("brief.md");
+  });
+});
+

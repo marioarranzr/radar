@@ -133,7 +133,7 @@
 **Done:** a followed company shows "new since last time" after a refresh.
 
 ## Phase 15 · Export
-- [ ] **P15.1** Download a brief as Markdown and as a print-ready PDF.
+- [x] **P15.1** Download a brief as Markdown and as a print-ready PDF.
 
 **Done:** both files open correctly and contain all eight sections.
 

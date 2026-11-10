@@ -115,6 +115,21 @@ describe("ReportView", () => {
     expect(source.getAttribute("rel")).toBe("noopener noreferrer");
     expect(source.getAttribute("target")).toBe("_blank");
   });
+
+  it("downloads the brief as a Markdown file and opens the print dialog", () => {
+    const createObjectURL = vi.fn(() => "blob:brief");
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    render(<ReportView report={validReport} createdAt="2026-10-14T10:00:00Z" footer="" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Download .md" }));
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe("acme-analytics.md");
+
+    fireEvent.click(screen.getByRole("button", { name: "Print / PDF" }));
+    expect(print).toHaveBeenCalledOnce();
+  });
 });
 
 describe("ResearchView", () => {

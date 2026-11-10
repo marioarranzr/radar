@@ -8,7 +8,7 @@ import { CopyIcon } from "@/components/Icons";
 import { Badge } from "@/components/StatusBadge";
 import { useToast } from "@/components/Toast";
 import { formatDate, hostname, isSafeUrl } from "@/lib/format";
-import { reportToMarkdown } from "@/lib/markdown";
+import { markdownFilename, reportToMarkdown } from "@/lib/markdown";
 
 // Every report string is rendered as plain React text — never as HTML (docs/02-TRD.md §7).
 
@@ -51,9 +51,16 @@ export function ReportView({
     }
   }
 
+  function downloadMarkdown() {
+    const url = URL.createObjectURL(new Blob([reportToMarkdown(report)], { type: "text/markdown" }));
+    const link = Object.assign(document.createElement("a"), { href: url, download: markdownFilename(report) });
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
-    <Card className="sm:p-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <Card className="sm:p-8 print:border-0 print:p-0 print:shadow-none">
+      <div className="flex flex-col gap-4">
         <div className="min-w-0">
           <h1
             tabIndex={-1}
@@ -67,11 +74,17 @@ export function ReportView({
             <span>{formatDate(createdAt)}</span>
           </p>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex flex-wrap gap-2 print:hidden">
           <button type="button" onClick={copyMarkdown} className={buttonClass("secondary")}>
             <CopyIcon /> Copy Markdown
           </button>
-          <Link href="/" className={buttonClass("primary")}>
+          <button type="button" onClick={downloadMarkdown} className={buttonClass("secondary")}>
+            Download .md
+          </button>
+          <button type="button" onClick={() => window.print()} className={buttonClass("secondary")}>
+            Print / PDF
+          </button>
+          <Link href="/" className={buttonClass("primary", "sm:ml-auto")}>
             New research
           </Link>
         </div>

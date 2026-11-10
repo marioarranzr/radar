@@ -40,3 +40,16 @@ export function reportToMarkdown(report: Report): string {
 
   return lines.join("\n") + "\n";
 }
+
+/** "Holded Technologies, S.L." → "holded-technologies-s-l.md" */
+export function markdownFilename(report: Report): string {
+  const slug = report.company_name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return `${slug || "brief"}.md`;
+}
+
