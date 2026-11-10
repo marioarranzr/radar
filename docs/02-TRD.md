@@ -167,11 +167,18 @@ page for each and returns a verdict per item: `supported`, `unsupported` or `unv
   saved unchanged with `verification = null`: the run still succeeds.
 - Its token usage is added to the run's metrics, so cost reflects both agents.
 
+### 3.10 Run queue (`src/agent/queue.ts`)
+Every research — single or batch — goes through one in-process queue that runs at most
+**2 agents at a time** (`MAX_CONCURRENT_RUNS`), in creation order. It bounds API cost, rate-limit
+pressure and load on the local machine. `startResearchAgent(id)` enqueues inside Next's `after()`,
+so the request still responds immediately. A queued research shows as `Queued` until a slot frees up.
+
 ## 4. Own APIs (Route Handlers)
 
 | Method | Route | Body / response | Notes |
 |---|---|---|---|
 | POST | `/api/research` | `{ query, context? }` → `{ id }` | Requires `Content-Type: application/json` (415); 400 validation; 429 if over the daily limit |
+| POST | `/api/research/batch` | `{ queries: string[] }` → `{ ids }` | 1-20 companies; 400 validation; 429 if more than the day's remaining limit (nothing is created) |
 | GET | `/api/research/[id]` | → `{ research, steps }` | Used by polling; 404 if not found |
 | POST | `/api/research/[id]/retry` | → `{ id }` | Only if `status='failed'` (409); max 3 attempts per research (409) |
 | DELETE | `/api/research/[id]` | → `204` | |
@@ -263,5 +270,6 @@ tests/
 | 2026-11-10 | The verifier can only downgrade facts or remove signals | Letting it rewrite the brief | A checker that can add content can also add errors |
 | 2026-11-10 | Small in-code migration adds new columns to existing databases | Asking to delete `data/radar.db` | Owners keep their history across schema changes |
 | 2026-11-10 | PDF export through the browser's print dialog and print CSS | A PDF library (e.g. react-pdf, Puppeteer) | No new dependency; the browser already renders the brief well |
+| 2026-11-10 | One in-process queue, 2 concurrent runs, for single and batch research | Unbounded `after()` per request; an external job queue | Bounds cost and rate limits with no new service; enough for a local tool |
 | 2026-10-14 | `tsx` to run `scripts/` | `node --experimental-strip-types` | Node can't resolve the `@/` path alias; `tsx` honours tsconfig paths |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |

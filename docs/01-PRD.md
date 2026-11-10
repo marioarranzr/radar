@@ -135,3 +135,10 @@ Each gets its detailed specification here when its phase starts.
   opens the browser's print dialog with print styles, so "Save as PDF" produces a clean document.
 - No new dependencies: the PDF comes from the browser, not a PDF library.
 
+### F12 · Batch research (phase 13)
+- On the home page, "Research several" accepts up to 20 companies, one per line, or a CSV whose
+  first column is the company name.
+- All of them are queued at once; they count against the daily limit, and a batch larger than what
+  is left today is rejected with a clear message.
+- Runs are processed two at a time; the history shows each one's status live.
+

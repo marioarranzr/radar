@@ -37,6 +37,15 @@ No login: the app opens directly at `/` (http://localhost:3000).
 | "N of 10 left today" text | — | Computed on the server | — |
 | **"Research"** button | Presses | 1) Client validation (Zod). 2) `POST /api/research`. 3) Button in loading state. | **200** → `/research/[id]` · **429** → notice "You've reached today's limit" and button disabled · **4xx/5xx** → error toast, text is kept |
 
+**Block A2 — Research several (batch)**
+| Element | Action | What happens | Next |
+|---|---|---|---|
+| **"Research several"** link (under the form) | Click | Swaps the form for a textarea: one company per line | — |
+| Textarea | Types / pastes | Counter "N companies · M left today"; empty lines and duplicates are ignored | — |
+| **"Upload CSV"** | Picks a `.csv` / `.txt` file | Fills the textarea with the first column of each row (a "company" header row is skipped) | — |
+| **"Research N companies"** button | Presses | `POST /api/research/batch` | **200** → toast "Queued N companies", textarea cleared, history shows them as Queued · **429** → "Only M left today" · **400** → message under the field |
+| **"Research one"** link | Click | Back to the single-company form | — |
+
 **Block B — History**
 | Element | Action | What happens | Next |
 |---|---|---|---|
@@ -47,6 +56,8 @@ No login: the app opens directly at `/` (http://localhost:3000).
 | Empty state | — | "You haven't researched any company yet" | — |
 
 Status chips: `Queued` · `Researching` (animated) · `Ready` · `Error`.
+
+While any item is `Queued` or `Researching`, the home page refreshes the history every 3 s.
 
 ### P2 · `/research/[id]`
 A single route with **3 states** depending on `research.status`. While the status is `queued` or `running`,
