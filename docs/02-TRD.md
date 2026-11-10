@@ -262,5 +262,6 @@ tests/
 | 2026-11-10 | The judge uses the same model by default, configurable via `JUDGE_MODEL` | Always a stronger model | Cost; a model may favour its own output, so a different `JUDGE_MODEL` is recommended for final numbers |
 | 2026-11-10 | The verifier can only downgrade facts or remove signals | Letting it rewrite the brief | A checker that can add content can also add errors |
 | 2026-11-10 | Small in-code migration adds new columns to existing databases | Asking to delete `data/radar.db` | Owners keep their history across schema changes |
+| 2026-11-10 | PDF export through the browser's print dialog and print CSS | A PDF library (e.g. react-pdf, Puppeteer) | No new dependency; the browser already renders the brief well |
 | 2026-10-14 | `tsx` to run `scripts/` | `node --experimental-strip-types` | Node can't resolve the `@/` path alias; `tsx` honours tsconfig paths |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |

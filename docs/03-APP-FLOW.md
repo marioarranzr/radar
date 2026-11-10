@@ -68,6 +68,8 @@ Automatic transition → 2b when `status='done'`, → 2c when `status='failed'`.
 | Brief with the 8 PRD sections (F4) | — | Facts with `confirmed:false` carry an "unconfirmed" label |
 | Links in Sources and Signals | Click | Open in a new tab (`rel="noopener noreferrer"`); the hostname is shown next to each title |
 | **"Copy Markdown"** button | Presses | Copies to clipboard; "Copied" toast |
+| **"Download .md"** button | Presses | Downloads `<company-name>.md` with the same Markdown |
+| **"Print / PDF"** button | Presses | Opens the browser print dialog; print styles hide the header, buttons and footer note so "Save as PDF" gives a clean one-document brief |
 | **"New research"** button | Presses | `/` with focus on the Company field |
 | Footer: "Generated in 74 s · 3 searches · 5 pages read · 8 claims verified, 1 downgraded" | — | Transparency info (the verification part only when the verifier ran) |
 

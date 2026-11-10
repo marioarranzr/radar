@@ -130,3 +130,8 @@ Each gets its detailed specification here when its phase starts.
 - Success: the judge's groundedness score and share of supported claims go up compared with briefs
   produced without the verifier, at an acceptable extra cost and time.
 
+### F14 · Export (phase 15)
+- From a brief: "Download .md" saves a Markdown file named after the company, and "Print / PDF"
+  opens the browser's print dialog with print styles, so "Save as PDF" produces a clean document.
+- No new dependencies: the PDF comes from the browser, not a PDF library.
+

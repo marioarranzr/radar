@@ -78,7 +78,7 @@ H1 "Researching Factorial HR", timer in mono on the right.
 
 ### `/research/[id]` — Brief
 A single document-style card. Header: name (H1), website as a mono link, date.
-"Copy Markdown" (secondary) and "New research" (primary) buttons at the top right
+"Copy Markdown", "Download .md" and "Print / PDF" (secondary) and "New research" (primary) buttons at the top right
 (below the title on narrow screens). Sections with H2 and body in Source Serif.
 "Key facts" as a 2-column definition list (1 on narrow screens). "Unconfirmed" as a
 warning Badge. Numbered sources in mono. Muted footer with metrics.
@@ -91,3 +91,9 @@ message, Retry (primary) and Back (ghost) buttons.
 
 - Friendly second person, short sentences, no technical jargon ("agent", "tokens" never appear in the UI).
 - Errors: what happened + what you can do. E.g.: "The search took too long. Try again in a moment."
+
+## 8. Print
+
+`@media print`: white background, black text, no header, no action buttons, no shadow or card border,
+links printed as text followed by their hostname. Sections avoid breaking inside a list item.
+
