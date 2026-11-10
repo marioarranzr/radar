@@ -7,7 +7,7 @@ import { Card } from "@/components/Card";
 import { CopyIcon } from "@/components/Icons";
 import { Badge } from "@/components/StatusBadge";
 import { useToast } from "@/components/Toast";
-import { formatDate, hostname, isSafeUrl } from "@/lib/format";
+import { formatDate, hostname, isSafeUrl, plural } from "@/lib/format";
 import { markdownFilename, reportToMarkdown } from "@/lib/markdown";
 
 // Every report string is rendered as plain React text — never as HTML (docs/02-TRD.md §7).
@@ -35,10 +35,19 @@ export function ReportView({
   report,
   createdAt,
   footer,
+  actions,
+  newSignals,
+  comparedWith,
 }: {
   report: Report;
   createdAt: string;
   footer: string;
+  /** Extra action buttons (e.g. Follow). */
+  actions?: React.ReactNode;
+  /** Indexes of recent signals that weren't in the previous brief. */
+  newSignals?: Set<number>;
+  /** Date of the previous brief this one refreshes. */
+  comparedWith?: string | null;
 }) {
   const toast = useToast();
 
@@ -73,6 +82,12 @@ export function ReportView({
             {report.website && <ExternalLink url={report.website}>{hostname(report.website)}</ExternalLink>}
             <span>{formatDate(createdAt)}</span>
           </p>
+          {comparedWith && (
+            <p className="mt-2 text-sm text-muted">
+              Updated from the brief of {formatDate(comparedWith)} ·{" "}
+              {newSignals?.size ? plural(newSignals.size, "new signal") : "no new signals"}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2 print:hidden">
           <button type="button" onClick={copyMarkdown} className={buttonClass("secondary")}>
@@ -84,6 +99,7 @@ export function ReportView({
           <button type="button" onClick={() => window.print()} className={buttonClass("secondary")}>
             Print / PDF
           </button>
+          {actions}
           <Link href="/" className={buttonClass("primary", "sm:ml-auto")}>
             New research
           </Link>
@@ -123,6 +139,9 @@ export function ReportView({
           <ul className="flex flex-col gap-2">
             {report.recent_signals.map((signal, index) => (
               <li key={index}>
+                {newSignals?.has(index) && (
+                  <Badge className="mr-1 bg-accent/12 font-sans text-accent">New</Badge>
+                )}
                 <span className="font-mono text-[13px] text-muted">{signal.date}</span>{" "}
                 <ExternalLink url={signal.url}>{signal.title}</ExternalLink>{" "}
                 <span className="font-mono text-[13px] text-muted">({hostname(signal.url)})</span>

@@ -5,6 +5,7 @@ import { BatchResearchForm } from "@/components/BatchResearchForm";
 import { HistoryList } from "@/components/HistoryList";
 import { NewResearchForm } from "@/components/NewResearchForm";
 import { ReportView } from "@/components/ReportView";
+import { WatchList } from "@/components/WatchList";
 import { ResearchView } from "@/components/ResearchView";
 import type { Research } from "@/lib/db";
 import { validReport } from "./fixtures/report";
@@ -166,6 +167,48 @@ describe("ReportView", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Print / PDF" }));
     expect(print).toHaveBeenCalledOnce();
+  });
+});
+
+describe("watchlist UI", () => {
+  it("follows a company from its brief", async () => {
+    fetchMock.mockReturnValueOnce(json(200, { watch: { id: "w1", intervalDays: 7 } }));
+    render(<ResearchView initialResearch={research()} initialSteps={[]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Follow" }));
+
+    expect(await screen.findByRole("button", { name: "Following" })).toHaveProperty("ariaPressed", "true");
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/watchlist");
+    expect(JSON.parse(init.body)).toEqual({ researchId: "r1" });
+  });
+
+  it("badges signals that weren't in the previous brief", () => {
+    const previousReport = { ...validReport, recent_signals: [] };
+    render(
+      <ResearchView
+        initialResearch={research()}
+        initialSteps={[]}
+        previous={{ report: previousReport, createdAt: "2026-10-01T10:00:00Z" }}
+      />,
+    );
+    expect(screen.getByText("New")).toBeDefined();
+    expect(screen.getByText(/Updated from the brief of Oct 1, 2026 · 1 new signal/)).toBeDefined();
+  });
+
+  it("lists followed companies and refreshes one", async () => {
+    fetchMock.mockReturnValueOnce(json(200, { id: "r2" }));
+    render(
+      <WatchList
+        items={[{ id: "w1", name: "Acme", lastResearchId: "r1", status: "done", updatedAt: new Date().toISOString(), newSignals: 2 }]}
+      />,
+    );
+
+    expect(screen.getByText(/2 new signals/)).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Refresh now" }));
+
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
+    expect(fetchMock).toHaveBeenCalledWith("/api/watchlist/w1/refresh", { method: "POST" });
   });
 });
 

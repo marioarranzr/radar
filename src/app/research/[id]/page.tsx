@@ -18,5 +18,14 @@ export default async function ResearchPage({ params }: Props) {
   const research = store.getResearch(id);
   if (!research) notFound();
 
-  return <ResearchView key={id} initialResearch={research} initialSteps={store.listSteps(id)} />;
+  const previous = research.previousId ? store.getResearch(research.previousId) : null;
+  return (
+    <ResearchView
+      key={id}
+      initialResearch={research}
+      initialSteps={store.listSteps(id)}
+      initialWatchId={store.getWatchByQuery(research.query)?.id ?? null}
+      previous={previous?.status === "done" ? { report: previous.report, createdAt: previous.createdAt } : null}
+    />
+  );
 }

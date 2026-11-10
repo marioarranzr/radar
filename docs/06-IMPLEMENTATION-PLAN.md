@@ -132,7 +132,7 @@
 ## Phase 14 · Watchlist
 - [x] **P14.1** `watchlist` table, `previous_id` column, store functions and new-signal comparison.
 - [x] **P14.2** Scheduler and the watchlist API (follow, unfollow, refresh now).
-- [ ] **P14.3** Follow button, "New" badges on refreshed briefs and the Following block on the home page.
+- [x] **P14.3** Follow button, "New" badges on refreshed briefs and the Following block on the home page.
 
 **Done:** a followed company shows "new since last time" after a refresh.
 

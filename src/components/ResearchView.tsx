@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ReportSchema, type Report } from "@/agent/schema";
 import { Button, buttonClass } from "@/components/Button";
+import { FollowButton } from "@/components/FollowButton";
 import { AlertIcon } from "@/components/Icons";
 import { ReportView } from "@/components/ReportView";
 import { StepList } from "@/components/StepList";
 import { useToast } from "@/components/Toast";
 import type { Research, ResearchStep } from "@/lib/db";
 import { formatDuration, plural, verificationText } from "@/lib/format";
+import { newSignalIndexes } from "@/lib/signals";
 
 const POLL_MS = 2000;
 
@@ -29,9 +31,15 @@ function secondsBetween(startIso: string, end: Date | string) {
 export function ResearchView({
   initialResearch,
   initialSteps,
+  initialWatchId = null,
+  previous = null,
 }: {
   initialResearch: Research;
   initialSteps: ResearchStep[];
+  /** The watchlist entry for this company, if followed. */
+  initialWatchId?: string | null;
+  /** The brief this research refreshes (watchlist), to flag new signals. */
+  previous?: { report: unknown; createdAt: string } | null;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -146,6 +154,7 @@ export function ResearchView({
   const report = research.status === "done" ? parseReport(research.report) : null;
 
   if (report) {
+    const previousReport = previous ? parseReport(previous.report) : null;
     const duration =
       research.startedAt && research.finishedAt
         ? `Generated in ${formatDuration(secondsBetween(research.startedAt, research.finishedAt))}`
@@ -159,7 +168,16 @@ export function ResearchView({
     ].join(" · ");
     return (
       <div ref={container}>
-        <ReportView report={report} createdAt={research.createdAt} footer={footer} />
+        <ReportView
+          report={report}
+          createdAt={research.createdAt}
+          footer={footer}
+          comparedWith={previousReport ? previous?.createdAt : null}
+          newSignals={newSignalIndexes(report, previousReport)}
+          actions={
+            <FollowButton researchId={research.id} companyName={report.company_name} initialWatchId={initialWatchId} />
+          }
+        />
       </div>
     );
   }
