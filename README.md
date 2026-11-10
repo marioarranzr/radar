@@ -43,7 +43,7 @@ automate: deciding what to build and holding the work to a standard.
 - **Specialised reviewers.** Database, code, security, React and accessibility review agents
   checked every phase; their real findings (a dev server exposed to the LAN, a DST bug in the
   daily limit, contrast failures) were fixed and are explained in the commit messages.
-- **Tests as the safety net.** 107 tests, including the agent loop driven by a scripted fake model,
+- **Tests as the safety net.** 180 tests, including the agent loop driven by a scripted fake model,
   so behaviour is verified without paying for API calls.
 
 The result doubles as a **reusable template** for building software with AI agents — see
@@ -52,26 +52,39 @@ The result doubles as a **reusable template** for building software with AI agen
 ## How the agent works
 
 ```
- "Factorial HR"  ──▶  POST /api/research ──▶ row in SQLite (queued) ──▶ responds with the id
-                                     │
-                                     └─ after the response: runResearchAgent(id)
+ "Factorial HR" ─▶ POST /api/research ─▶ row in SQLite (queued) ─▶ responds with the id
+                                   │
+                                   └─ after the response: run queue (2 agents at a time)
                                            │
-                     ┌─────────────────────▼─────────────────────┐
-                     │  OpenAI Responses API (gpt-6.1-sol)        │
-                     │  tools: web_search (search / open pages)   │◀─┐ chained with
-                     │         submit_report (strict JSON schema) │  │ previous_response_id
-                     └─────────────────────┬─────────────────────┘  │
-             each finished tool call ──▶ progress step in SQLite     │
-             no brief yet? ──▶ one reminder ─────────────────────────┤
-             invalid brief? ──▶ errors sent back once ───────────────┘
-             valid brief ──▶ validated with Zod ──▶ saved (done)
+                   ┌───────────────────────▼───────────────────────┐
+                   │ Researcher · OpenAI Responses API (gpt-6.1-sol) │◀─┐ chained with
+                   │  web_search            (OpenAI-hosted)          │  │ previous_response_id
+                   │  lookup_company_facts  (our server → Wikidata)  │  │
+                   │  submit_report         (strict JSON schema)     │  │
+                   └───────────────────────┬───────────────────────┘  │
+           each finished tool call ─▶ progress step in SQLite          │
+           no brief yet? ─▶ one reminder ──────────────────────────────┤
+           invalid brief? ─▶ Zod errors sent back once ─────────────────┘
+           valid brief ─▶ (optional) verifier agent re-checks it ─▶ saved
 
- Browser polls GET /api/research/[id] every 2 s ──▶ live steps, then the brief
+ Browser polls GET /api/research/[id] every 2 s ─▶ live steps, then the brief
+ Evaluation only: a judge agent opens the cited pages and scores each brief
 ```
 
 - The user never writes a prompt: all the "how to ask the model" lives in the product.
-- The brief is a **strict function call** validated again with Zod — no free-text parsing.
+- Three agents share **one loop** (researcher, verifier, judge): tools, strict submission,
+  one reminder, one self-correction, turn caps, refusal and truncation handling.
 - Failures (refusals, truncation, bad keys, rate limits) end in a readable error with a Retry button.
+
+## What it does
+
+- **Research one company or many** — type a name, or paste / upload a CSV of up to 20.
+- **Watch it work** — live steps: searches, pages read, Wikidata lookups.
+- **A one-page brief** — summary, offering, business model, key facts (unconfirmed ones flagged),
+  dated recent signals, likely pains, questions for a first call, and every source.
+- **Follow companies** — refreshed every 7 days while Radar runs; signals that weren't in the
+  previous brief are badged **New**.
+- **Export** — copy or download as Markdown, or print to PDF.
 
 ## Getting started
 
@@ -93,6 +106,7 @@ npm run dev                  # http://127.0.0.1:3000
 | `npm run agent:try -- "Company" ["context"]` | Run the agent from the terminal and print the brief |
 | `npm run agent:eval` | Research and judge the 10 evaluation companies; print a results table |
 | `npm run agent:judge` | Judge the latest stored brief of each evaluation company (no new research) |
+| `npm run agent:verify-eval` | Run the verifier on the stored briefs and report what it changes |
 
 Data lives in a single local file, `data/radar.db` (ignored by git).
 
@@ -106,13 +120,14 @@ services besides OpenAI, no component or icon library.
 
 ```
 docs/            The specs that drive development (see below)
-src/agent/       The agent: prompt, brief schema, loop, progress steps, stream adapter
+src/agent/       Agents: shared loop, researcher, verifier, run queue, watchlist, Wikidata tool
+src/eval/        Evaluation: LLM judge, results table, evaluation set
 src/app/         Pages and API routes (Next.js App Router)
 src/components/  Hand-written UI components
 src/lib/         SQLite store, env validation, request validation, formatting
 src/middleware.ts  Localhost-only guard (DNS rebinding + CSRF)
-scripts/         Terminal tools: try the agent, evaluate it
-tests/           107 tests, including the agent loop driven by a scripted fake model
+scripts/         Terminal tools: try the agent, evaluate it, judge it, measure the verifier
+tests/           180 tests: agents driven by a scripted fake model, recorded Wikidata responses
 ```
 
 ## Built document-first
@@ -134,7 +149,19 @@ then ask your agent to list contradictions between them before writing any code.
 
 ## Evaluation
 
-Ten companies, run with `npm run agent:eval` — see [docs/eval-results.md](docs/eval-results.md).
+Every change to the agent is measured on the same ten companies with `npm run agent:eval`, and a
+**judge agent** opens the cited pages to check the five most important claims of each brief.
+Full tables in [docs/eval-results.md](docs/eval-results.md).
+
+| Experiment | Result | Decision |
+|---|---|---|
+| Baseline (`gpt-6.1-sol`) | 10/10 briefs, 50/50 checked claims supported | — |
+| Less web content per search (`low`) | Cost −18 % ($0.138), time −40 % (42 s), quality within noise | **Default** |
+| Verifier agent (second agent re-checks facts) | +39 % cost, +16 s, no real error caught | **Opt-in only** |
+| Cheaper model (`gpt-6-luna`) | $0.038, but relevance 3.4/5 and 90 % claims supported | Not adopted |
+| Stronger model (`gpt-6-astra`) | $0.66 for a small quality gain | Not adopted |
+
+Adding an agent is easy; knowing when it's worth it is the job.
 
 ## Engineering notes
 
@@ -149,6 +176,11 @@ A few things that weren't obvious:
   stripped before validation ([sanitize.ts](src/agent/sanitize.ts)).
 - **"Local only" needs enforcing.** `next dev` listens on every interface by default; Radar binds to
   127.0.0.1 and a middleware rejects non-local hosts and cross-site writes.
+- **Real APIs differ from their types.** The live API returned a web search item without the
+  `action` the SDK types promise; it only showed up in an evaluation run, and progress reporting can
+  no longer fail a research.
+- **Tool outputs steer behaviour.** The agent used Wikidata's facts without citing them until the
+  tool's output itself carried a ready-made sources entry.
 - **Web content is untrusted input.** The brief is rendered as plain text, links are restricted to
   http(s) and open with `noopener noreferrer`, and the user's own text is escaped inside the prompt.
 
