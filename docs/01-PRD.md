@@ -153,3 +153,9 @@ Each gets its detailed specification here when its phase starts.
 - The home page lists followed companies with their last refresh and how many new signals it found.
 - Refreshes go through the run queue and count against the daily limit; if none are left, they wait.
 
+### F11 · Custom tools (phase 12)
+- Besides web search, the researcher can call `lookup_company_facts`, which our server answers from
+  Wikidata: founding date, headquarters, employees, website, industry, CEO and parent company.
+- The agent decides when to use it; facts it takes from Wikidata cite the Wikidata page as a source.
+- Success: the tool is called on companies Wikidata knows, and its page appears among the brief's sources.
+

@@ -118,7 +118,8 @@
 **Done:** `LLM_PROVIDER` switches providers with no other code change; comparison table in the docs.
 
 ## Phase 12 · Custom tools
-- [ ] **P12.1** A client-side tool beyond web search (to be chosen when the phase starts, e.g. a public company registry), with the agent loop executing it.
+- [ ] **P12.1** The shared loop executes client functions (TRD §3.7, §3.12).
+- [ ] **P12.2** `lookup_company_facts` backed by Wikidata, wired into the researcher, with tests on recorded responses.
 
 **Done:** the agent calls our own tool when relevant and its results appear in the brief's sources.
 

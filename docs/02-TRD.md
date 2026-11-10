@@ -182,6 +182,19 @@ so the request still responds immediately. A queued research shows as `Queued` u
 - **New signals** are computed at read time: signals in the brief whose URL (or title, when URLs
   differ only in tracking parameters) doesn't appear in the previous brief.
 
+### 3.12 Custom tool: `lookup_company_facts` (`src/agent/tools/wikidata.ts`)
+A client-side function tool the researcher can call alongside `web_search`. Our server executes it
+against **Wikidata** (free, no API key) and returns structured facts for up to 3 matching entities:
+founding date, country, headquarters, employees (latest), website, industry, CEO and parent
+organisation, each entity with its `https://www.wikidata.org/wiki/Q…` URL to cite.
+
+- The shared loop (§3.7) runs **client functions**: when a response contains calls to them (and no
+  submit call), it executes them, sends the outputs back as `function_call_output` items chained
+  with `previous_response_id`, and continues. Tool errors are returned to the model as text, never thrown.
+- Requests go only to `www.wikidata.org` with a descriptive `User-Agent` and an 8 s timeout; the
+  result is capped at 3 entities, so its size is bounded.
+- Progress step: "Checking Wikidata: <name>".
+
 ## 4. Own APIs (Route Handlers)
 
 | Method | Route | Body / response | Notes |
@@ -287,5 +300,6 @@ tests/
 | 2026-11-10 | In-process scheduler for the watchlist | OS cron, a hosted scheduler | Nothing to install; a local tool only needs to refresh while it's running |
 | 2026-11-10 | New signals computed at read time from `previous_id` | Storing a diff | No duplicated data; the comparison can improve without a migration |
 | 2026-11-10 | **`search_context_size: "low"` by default** | `"medium"` | Same 10 companies: avg cost $0.168 → $0.138 (meets O4), median 70 s → 42 s, judge scores within noise (49/50 vs 50/50 claims supported) |
+| 2026-11-10 | First custom tool: Wikidata company facts | OpenCorporates, GLEIF, scraping a registry | Free, no key, structured and citable; GLEIF has legal data only, OpenCorporates now needs a key |
 | 2026-10-14 | `tsx` to run `scripts/` | `node --experimental-strip-types` | Node can't resolve the `@/` path alias; `tsx` honours tsconfig paths |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |
