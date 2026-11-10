@@ -6,6 +6,8 @@ const EnvSchema = z.object({
     .string({ error: "OPENAI_API_KEY is missing. Add it to .env.local." })
     .startsWith("sk-", "OPENAI_API_KEY does not look like an OpenAI key."),
   OPENAI_MODEL: z.string().min(1).default("gpt-6.1-sol"),
+  // Evaluation only; falls back to OPENAI_MODEL. An empty value counts as unset.
+  JUDGE_MODEL: z.preprocess((value) => value || undefined, z.string().min(1).optional()),
   DAILY_RESEARCH_LIMIT: z.coerce.number().int().positive().default(10),
   DATABASE_PATH: z.string().min(1).default("./data/radar.db"),
 });

@@ -91,7 +91,8 @@ npm run dev                  # http://127.0.0.1:3000
 | `npm test` | Unit, route and component tests (Vitest), no network |
 | `npm run lint` | ESLint + route type generation + `tsc` |
 | `npm run agent:try -- "Company" ["context"]` | Run the agent from the terminal and print the brief |
-| `npm run agent:eval` | Run the agent on 10 companies and print a results table |
+| `npm run agent:eval` | Research and judge the 10 evaluation companies; print a results table |
+| `npm run agent:judge` | Judge the latest stored brief of each evaluation company (no new research) |
 
 Data lives in a single local file, `data/radar.db` (ignored by git).
 

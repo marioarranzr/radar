@@ -13,6 +13,11 @@ describe("parseEnv", () => {
     });
   });
 
+  it("treats an empty JUDGE_MODEL as unset", () => {
+    expect(parseEnv({ OPENAI_API_KEY: validKey, JUDGE_MODEL: "" }).JUDGE_MODEL).toBeUndefined();
+    expect(parseEnv({ OPENAI_API_KEY: validKey, JUDGE_MODEL: "gpt-6-astra" }).JUDGE_MODEL).toBe("gpt-6-astra");
+  });
+
   it("coerces the daily limit from a string", () => {
     const env = parseEnv({ OPENAI_API_KEY: validKey, DAILY_RESEARCH_LIMIT: "3" });
     expect(env.DAILY_RESEARCH_LIMIT).toBe(3);
