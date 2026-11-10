@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration, formatRelative, hostname, isSafeUrl } from "@/lib/format";
+import { formatDuration, formatRelative, hostname, isSafeUrl, verificationText } from "@/lib/format";
 
 const now = new Date("2026-10-14T12:00:00Z");
 
@@ -21,5 +21,12 @@ describe("format helpers", () => {
     expect(hostname("https://www.acme.com/about")).toBe("acme.com");
     expect(isSafeUrl("https://acme.com")).toBe(true);
     expect(isSafeUrl("javascript:alert(1)")).toBe(false);
+  });
+
+  it("describes the verifier's outcome", () => {
+    expect(verificationText({ checked: 8, downgraded: 1, removedSignals: 0 })).toBe("8 claims verified, 1 downgraded");
+    expect(verificationText({ checked: 1, downgraded: 0, removedSignals: 1 })).toBe(
+      "1 claim verified, none downgraded, 1 signal removed",
+    );
   });
 });

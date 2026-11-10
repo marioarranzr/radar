@@ -69,7 +69,7 @@ Automatic transition → 2b when `status='done'`, → 2c when `status='failed'`.
 | Links in Sources and Signals | Click | Open in a new tab (`rel="noopener noreferrer"`); the hostname is shown next to each title |
 | **"Copy Markdown"** button | Presses | Copies to clipboard; "Copied" toast |
 | **"New research"** button | Presses | `/` with focus on the Company field |
-| Footer: "Generated in 74 s · 3 searches · 5 pages read · 8 facts verified, 1 downgraded" | — | Transparency info (the verification part only when the verifier ran) |
+| Footer: "Generated in 74 s · 3 searches · 5 pages read · 8 claims verified, 1 downgraded" | — | Transparency info (the verification part only when the verifier ran) |
 
 **State 2c — Error** (`failed`)
 | Element | Action | What happens | Next |

@@ -48,3 +48,11 @@ export function isSafeUrl(url: string): boolean {
 export function plural(count: number, word: string): string {
   return `${count} ${word}${count === 1 ? "" : "s"}`;
 }
+
+/** "8 claims verified, 1 downgraded, 1 signal removed" — the verifier's outcome for the footer. */
+export function verificationText(summary: { checked: number; downgraded: number; removedSignals: number }): string {
+  const parts = [`${plural(summary.checked, "claim")} verified`];
+  parts.push(summary.downgraded ? `${summary.downgraded} downgraded` : "none downgraded");
+  if (summary.removedSignals) parts.push(`${plural(summary.removedSignals, "signal")} removed`);
+  return parts.join(", ");
+}

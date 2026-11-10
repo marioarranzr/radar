@@ -120,7 +120,13 @@ describe("ReportView", () => {
 describe("ResearchView", () => {
   it("shows the brief with run metrics when done", () => {
     render(<ResearchView initialResearch={research()} initialSteps={[]} />);
-    expect(screen.getByText(/Generated in 1 min 14 s · 3 searches · 5 pages read/)).toBeDefined();
+    expect(screen.getByText(/Generated in 1 min 14 s · 3 searches · 5 pages read · AI-generated/)).toBeDefined();
+  });
+
+  it("adds the verifier's outcome to the footer", () => {
+    const verified = research({ verification: { checked: 8, downgraded: 1, removedSignals: 0 } });
+    render(<ResearchView initialResearch={verified} initialSteps={[]} />);
+    expect(screen.getByText(/5 pages read · 8 claims verified, 1 downgraded/)).toBeDefined();
   });
 
   it("shows progress steps while running", () => {

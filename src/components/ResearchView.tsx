@@ -10,7 +10,7 @@ import { ReportView } from "@/components/ReportView";
 import { StepList } from "@/components/StepList";
 import { useToast } from "@/components/Toast";
 import type { Research, ResearchStep } from "@/lib/db";
-import { formatDuration, plural } from "@/lib/format";
+import { formatDuration, plural, verificationText } from "@/lib/format";
 
 const POLL_MS = 2000;
 
@@ -155,6 +155,7 @@ export function ResearchView({
       duration,
       `${searches} ${searches === 1 ? "search" : "searches"}`,
       `${plural(research.pagesRead ?? 0, "page")} read`,
+      ...(research.verification ? [verificationText(research.verification)] : []),
     ].join(" · ");
     return (
       <div ref={container}>
