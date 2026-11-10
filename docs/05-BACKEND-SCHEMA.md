@@ -39,12 +39,23 @@ research_steps      (research_id → research.id, ON DELETE CASCADE)
 | `output_tokens` | `INTEGER` | NULL | |
 | `searches` | `INTEGER` | NULL | Number of `web_search` calls used |
 | `pages_read` | `INTEGER` | NULL | Number of `web_fetch` calls used |
+| `previous_id` | `TEXT` | NULL | For a watchlist refresh: the research it updates (TRD §3.11) |
 | `verification` | `TEXT` | NULL | JSON `{ checked, downgraded, removedSignals }` from the verifier (TRD §3.9); NULL if skipped or failed |
 | `started_at` | `TEXT` | NULL | ISO 8601 UTC |
 | `finished_at` | `TEXT` | NULL | ISO 8601 UTC |
 | `created_at` | `TEXT` | NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')) | ISO 8601 UTC |
 
 Index: `idx_research_created_at` on `(created_at DESC)` for the history and the daily count.
+
+### 3.3 `watchlist`
+| Column | SQLite type | Constraints | Description |
+|---|---|---|---|
+| `id` | `TEXT` | PRIMARY KEY | UUID |
+| `query` | `TEXT` | NOT NULL, UNIQUE (case-insensitive) | Company searched for on each refresh |
+| `context` | `TEXT` | NULL | Context reused on each refresh |
+| `last_research_id` | `TEXT` | NULL, FK → `research.id` ON DELETE SET NULL | Latest brief for this company |
+| `interval_days` | `INTEGER` | NOT NULL DEFAULT 7, CHECK > 0 | Refresh cadence |
+| `created_at` | `TEXT` | NOT NULL DEFAULT now (ISO 8601 UTC) | |
 
 ### 3.2 `research_steps`
 | Column | SQLite type | Constraints | Description |
@@ -78,6 +89,7 @@ CREATE TABLE IF NOT EXISTS research (
   searches      INTEGER,
   pages_read    INTEGER,
   verification  TEXT,
+  previous_id   TEXT,
   started_at    TEXT,
   finished_at   TEXT,
   created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
@@ -106,7 +118,7 @@ CREATE INDEX IF NOT EXISTS idx_steps_research ON research_steps (research_id, id
 - `PRAGMA busy_timeout = 5000` so concurrent writers wait instead of failing.
 - The store is cached on `globalThis` so Next.js hot-reload and separate bundles share one connection.
 - `IF NOT EXISTS` never alters existing tables, so `openDatabase` also runs a small migration: for each
-  column added after the first release (currently `verification`), `ALTER TABLE … ADD COLUMN` if missing.
+  column added after the first release (currently `verification` and `previous_id`), `ALTER TABLE … ADD COLUMN` if missing.
 - Exposed functions (and nothing else):
 
 | Function | Used by |

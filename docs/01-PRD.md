@@ -144,3 +144,12 @@ Each gets its detailed specification here when its phase starts.
   is left today is rejected with a clear message.
 - Runs are processed two at a time; the history shows each one's status live.
 
+### F13 · Watchlist (phase 14)
+- "Follow" on a brief adds the company to a watchlist; "Unfollow" removes it.
+- While Radar is running, each followed company is re-researched every 7 days (it's a local tool,
+  so nothing runs while it's closed); "Refresh now" does it on demand.
+- Each refresh is linked to the previous brief; recent signals that weren't in it get a "New" badge,
+  and the brief says what it was compared with.
+- The home page lists followed companies with their last refresh and how many new signals it found.
+- Refreshes go through the run queue and count against the daily limit; if none are left, they wait.
+

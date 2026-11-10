@@ -46,6 +46,13 @@ No login: the app opens directly at `/` (http://localhost:3000).
 | **"Research N companies"** button | Presses | `POST /api/research/batch` | **200** → toast "Queued N companies", textarea cleared, history shows them as Queued · **429** → "Only M left today" · **400** → message under the field |
 | **"Research one"** link | Click | Back to the single-company form | — |
 
+**Block C — Following** (only when the watchlist isn't empty)
+| Element | Action | What happens | Next |
+|---|---|---|---|
+| Row: company, "Updated 3 days ago", "2 new signals" | Click | — | `/research/[last id]` |
+| **"Refresh now"** | Press | `POST /api/watchlist/[id]/refresh`; the row shows Researching | — |
+| **"Unfollow"** | Press | `DELETE /api/watchlist/[id]`; the row disappears | — |
+
 **Block B — History**
 | Element | Action | What happens | Next |
 |---|---|---|---|
@@ -80,6 +87,8 @@ Automatic transition → 2b when `status='done'`, → 2c when `status='failed'`.
 | Links in Sources and Signals | Click | Open in a new tab (`rel="noopener noreferrer"`); the hostname is shown next to each title |
 | **"Copy Markdown"** button | Presses | Copies to clipboard; "Copied" toast |
 | **"Download .md"** button | Presses | Downloads `<company-name>.md` with the same Markdown |
+| **"Follow"** / **"Following"** button | Press | Follows (`POST /api/watchlist`) or unfollows the company; toast "Following X — refreshed every 7 days" |
+| "Updated from the brief of Oct 14 · 2 new signals" | — | Shown on refreshes; new signals carry a "New" badge |
 | **"Print / PDF"** button | Presses | Opens the browser print dialog; print styles hide the header, buttons and footer note so "Save as PDF" gives a clean one-document brief |
 | **"New research"** button | Presses | `/` with focus on the Company field |
 | Footer: "Generated in 74 s · 3 searches · 5 pages read · 8 claims verified, 1 downgraded" | — | Transparency info (the verification part only when the verifier ran) |

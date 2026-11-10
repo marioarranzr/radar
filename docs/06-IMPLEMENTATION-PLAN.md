@@ -130,7 +130,9 @@
 **Done:** 10 companies from a CSV end up as 10 briefs in the history.
 
 ## Phase 14 · Watchlist
-- [ ] **P14.1** Follow a company; Radar re-researches it on a schedule and highlights new recent signals.
+- [ ] **P14.1** `watchlist` table, `previous_id` column, store functions and new-signal comparison.
+- [ ] **P14.2** Scheduler and the watchlist API (follow, unfollow, refresh now).
+- [ ] **P14.3** Follow button, "New" badges on refreshed briefs and the Following block on the home page.
 
 **Done:** a followed company shows "new since last time" after a refresh.
 

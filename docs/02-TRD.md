@@ -173,12 +173,24 @@ Every research — single or batch — goes through one in-process queue that ru
 pressure and load on the local machine. `startResearchAgent(id)` enqueues inside Next's `after()`,
 so the request still responds immediately. A queued research shows as `Queued` until a slot frees up.
 
+### 3.11 Watchlist refresh (`src/agent/watchlist.ts`)
+- A `watchlist` row per followed company; each refresh creates a normal research with
+  `previous_id` pointing at the watch's last research, then becomes its new `last_research_id`.
+- **Scheduler:** started from `src/instrumentation.ts`, it checks every 10 minutes for watches whose
+  last research is older than `interval_days` (default 7) and has finished, and enqueues a refresh if
+  the daily limit allows. A watch never has two refreshes in flight.
+- **New signals** are computed at read time: signals in the brief whose URL (or title, when URLs
+  differ only in tracking parameters) doesn't appear in the previous brief.
+
 ## 4. Own APIs (Route Handlers)
 
 | Method | Route | Body / response | Notes |
 |---|---|---|---|
 | POST | `/api/research` | `{ query, context? }` → `{ id }` | Requires `Content-Type: application/json` (415); 400 validation; 429 if over the daily limit |
 | POST | `/api/research/batch` | `{ queries: string[] }` → `{ ids }` | 1-20 companies; 400 validation; 429 if more than the day's remaining limit (nothing is created) |
+| POST | `/api/watchlist` | `{ researchId }` → `{ watch }` | Follow the company of a finished research; 404 if missing, idempotent per company |
+| DELETE | `/api/watchlist/[id]` | → `204` | Unfollow |
+| POST | `/api/watchlist/[id]/refresh` | → `{ id }` | Refresh now; 409 if one is already running, 429 at the daily limit |
 | GET | `/api/research/[id]` | → `{ research, steps }` | Used by polling; 404 if not found |
 | POST | `/api/research/[id]/retry` | → `{ id }` | Only if `status='failed'` (409); max 3 attempts per research (409) |
 | DELETE | `/api/research/[id]` | → `204` | |
@@ -272,5 +284,7 @@ tests/
 | 2026-11-10 | PDF export through the browser's print dialog and print CSS | A PDF library (e.g. react-pdf, Puppeteer) | No new dependency; the browser already renders the brief well |
 | 2026-11-10 | One in-process queue, 2 concurrent runs, for single and batch research | Unbounded `after()` per request; an external job queue | Bounds cost and rate limits with no new service; enough for a local tool |
 | 2026-11-10 | **Verifier off by default** (`VERIFY_BRIEFS=false`) | On by default | Measured on the 10 eval briefs: +$0.065 (+39 %) and +16 s per brief, 4 of 124 claims downgraded (all blocked pages or nuances, no real error caught), judge scores unchanged. Kept as an opt-in safety net |
+| 2026-11-10 | In-process scheduler for the watchlist | OS cron, a hosted scheduler | Nothing to install; a local tool only needs to refresh while it's running |
+| 2026-11-10 | New signals computed at read time from `previous_id` | Storing a diff | No duplicated data; the comparison can improve without a migration |
 | 2026-10-14 | `tsx` to run `scripts/` | `node --experimental-strip-types` | Node can't resolve the `@/` path alias; `tsx` honours tsconfig paths |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |
