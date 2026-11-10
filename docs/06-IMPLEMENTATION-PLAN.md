@@ -89,14 +89,17 @@
 **Done:** a visitor sees the app working and a green build without cloning the repo.
 
 ## Phase 8 · Close the evaluation
+> Runs after phase 9, so the cost experiment can be compared on judge scores, not just on cost.
+
 - [ ] **P8.1** Cost experiment: `search_context_size: "low"` vs `"medium"` on the same 10 companies; keep the cheaper setting if quality holds (O4).
 - [ ] **P8.2** Owner rates the 10 briefs useful / not useful (O1). _(Owner task.)_
 
 **Done:** O1-O4 recorded in `docs/eval-results.md` with the chosen configuration.
 
 ## Phase 9 · LLM-as-judge evaluation
-- [ ] **P9.1** Judge: a second model scores each brief (groundedness, completeness, relevance, hallucination flags) with a strict output schema.
-- [ ] **P9.2** `npm run agent:eval` runs the judge and adds its scores to the results table.
+- [ ] **P9.1** Extract the shared agent loop (TRD §3.7); the researcher's tests pass unchanged.
+- [ ] **P9.2** Judge agent (TRD §3.8) with a strict schema and tests driven by a fake model.
+- [ ] **P9.3** `npm run agent:judge` grades existing briefs; `npm run agent:eval` grades each new one. Judge the 10 evaluation briefs.
 
 **Done:** every eval run produces objective quality scores next to time and cost.
 

@@ -112,6 +112,38 @@ Each finished `web_search_call` item is translated into a readable step: `search
 "Searching: “acme pricing”", `open_page` → "Reading: acme.com/about", `find_in_page` →
 "Scanning: acme.com/pricing". The `submit_report` call becomes "Writing the brief".
 
+### 3.7 Shared agent loop (`src/agent/loop.ts`)
+The researcher, the judge (§3.8) and the verifier all follow the same pattern, so it lives in one
+function: stream a request with the given tools, report each finished output item, and finish when
+the model calls the **submit function** with arguments that pass its Zod schema. The loop owns the
+chaining (`previous_response_id`), the single reminder, the single validation-correction turn, the
+turn cap and the refusal / truncation checks, and returns a typed result:
+`ok | refused | truncated | invalid | no_submit | too_many_turns | aborted`, plus token usage.
+Callers map those outcomes to their own messages; API errors are thrown to the caller.
+
+### 3.8 Evaluation judge (`src/eval/judge.ts`, offline only)
+A second agent grades a finished brief. It never runs in the app — only from `npm run agent:eval`
+and `npm run agent:judge`.
+
+| Setting | Value |
+|---|---|
+| Model | `JUDGE_MODEL` (default: same as `OPENAI_MODEL`) |
+| Tools | `web_search` (to open the cited pages) + strict `submit_judgement` function |
+| Effort | `reasoning.effort: "medium"` |
+
+It picks the 5 most important factual claims (key facts and recent signals), opens the cited
+source for each and marks it `supported`, `unsupported` or `unverifiable`, then scores 1-5:
+
+| Score | Question |
+|---|---|
+| `groundedness` | Are the claims backed by the cited sources? |
+| `completeness` | Are all sections substantive (not filler)? |
+| `relevance` | Would this actually help prepare a first sales call? |
+| `recency` | Are the signals recent and dated correctly? |
+
+Plus a one-paragraph `summary`. Results are printed as a table and saved as JSON in `data/evals/`
+(ignored by git); the headline numbers go into `docs/eval-results.md`.
+
 ## 4. Own APIs (Route Handlers)
 
 | Method | Route | Body / response | Notes |
@@ -131,6 +163,7 @@ rebinding) and non-GET requests with a non-local `Origin` are rejected with 403 
 ```
 OPENAI_API_KEY=                # required, server only
 OPENAI_MODEL=gpt-6.1-sol
+JUDGE_MODEL=                  # optional, evaluation only; defaults to OPENAI_MODEL
 DAILY_RESEARCH_LIMIT=10
 DATABASE_PATH=./data/radar.db
 ```
@@ -146,6 +179,7 @@ src/
     api/research/[id]/route.ts
     api/research/[id]/retry/route.ts
   agent/
+    loop.ts         # shared submit-function agent loop (§3.7)
     run.ts          # runResearchAgent(id)
     prompt.ts
     schema.ts       # ReportSchema (Zod)
@@ -153,6 +187,8 @@ src/
   lib/
     db.ts           # node:sqlite connection + queries
     env.ts          # validates environment variables with Zod
+  eval/
+    judge.ts        # evaluation judge (§3.8), offline only
   components/       # Button, Input, Badge, Card, StepList, Report…
 db/schema.sql       # SQLite schema (applied on startup if missing)
 data/               # radar.db (ignored by git)
@@ -196,5 +232,7 @@ tests/
 | 2026-10-14 | Zod 4 instead of 3 | Zod 3 + `zod-to-json-schema` | `z.toJSONSchema()` is built in: one dependency fewer |
 | 2026-10-14 | **Switch the LLM provider from Anthropic (Claude) to OpenAI** — Responses API, `web_search`, `gpt-6.1-sol` | Claude API (`claude-opus-5-5`) | Owner's decision. `gpt-6.1-sol` is half the price per token, and `web_search` can also open pages, so one tool replaces web search + web fetch |
 | 2026-10-14 | Read raw stream events instead of the SDK's `responses.stream()` helper | `client.responses.stream()` | The helper's accumulator throws on valid sequences ("expected output item type 'message', got 'function_call'"); the terminal event already carries the full response |
+| 2026-11-10 | One shared agent loop for the researcher, judge and verifier | Copying the loop per agent | One place for chaining, retries, refusal and truncation handling |
+| 2026-11-10 | The judge uses the same model by default, configurable via `JUDGE_MODEL` | Always a stronger model | Cost; a model may favour its own output, so a different `JUDGE_MODEL` is recommended for final numbers |
 | 2026-10-14 | `tsx` to run `scripts/` | `node --experimental-strip-types` | Node can't resolve the `@/` path alias; `tsx` honours tsconfig paths |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |

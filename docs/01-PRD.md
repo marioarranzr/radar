@@ -115,3 +115,10 @@ Each gets its detailed specification here when its phase starts.
 | F14 | Export to Markdown and PDF | Share briefs outside Radar |
 | F15 | Users and deployment | A public, signed-in version |
 
+### F8 · LLM-as-judge quality scores (phase 9)
+- A judge agent grades each evaluation brief: it checks the 5 most important claims against
+  their cited sources and scores groundedness, completeness, relevance and recency from 1 to 5.
+- It runs only in the evaluation tooling (`npm run agent:eval`, `npm run agent:judge`), never in the app.
+- Success: every eval run reports quality scores next to time and cost, so changes to the prompt,
+  model or settings can be compared on quality, not just on whether they ran.
+
