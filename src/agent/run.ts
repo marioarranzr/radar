@@ -1,14 +1,15 @@
 import OpenAI from "openai";
-import { runSubmitLoop, type CreateStream, type LoopResult } from "@/agent/loop";
+import { runSubmitLoop, type CreateStream, type LoopResult, type Usage } from "@/agent/loop";
 import { streamResponse } from "@/agent/openai-stream";
 import { buildUserMessage, SUBMIT_REPORT_REMINDER, SYSTEM_PROMPT } from "@/agent/prompt";
 import { ReportSchema, reportInputSchema, type Report } from "@/agent/schema";
 import { stripCitationMarkers } from "@/agent/sanitize";
 import { stepForItem } from "@/agent/steps";
-import { getStore, type Store } from "@/lib/db";
+import { applyVerification, verifyBrief } from "@/agent/verify";
+import { getStore, type Store, type VerificationSummary } from "@/lib/db";
 import { getEnv } from "@/lib/env";
 
-// The research agent — see docs/02-TRD.md §3.
+// The research agent — see docs/02-TRD.md §3. After it, the verifier agent (§3.9) checks the brief.
 
 export type { AgentRequest, AgentStream } from "@/agent/loop";
 
@@ -17,6 +18,8 @@ export interface AgentDeps {
   model: string;
   createStream: CreateStream;
   now: () => Date;
+  /** Run the verifier agent on the finished brief (VERIFY_BRIEFS). */
+  verify: boolean;
 }
 
 /** Readable message for the UI; never leaks raw API details. */
@@ -82,14 +85,70 @@ export async function runResearchAgent(id: string, deps: AgentDeps = defaultDeps
     usage = result.usage;
 
     if (result.status === "aborted") return; // the research was deleted mid-run
-    if (result.status === "ok") {
-      store.markDone(id, result.value, { ...metrics(), companyName: result.value.company_name });
+    if (result.status !== "ok") {
+      store.markFailed(id, FAILURE_MESSAGES[result.status], metrics());
       return;
     }
-    store.markFailed(id, FAILURE_MESSAGES[result.status], metrics());
+
+    let report = result.value;
+    let verification: VerificationSummary | null = null;
+    if (deps.verify) {
+      const verified = await verifyAndApply(id, report, deps, counts);
+      usage = {
+        inputTokens: usage.inputTokens + verified.usage.inputTokens,
+        outputTokens: usage.outputTokens + verified.usage.outputTokens,
+      };
+      if (verified.aborted) return;
+      report = verified.report;
+      verification = verified.summary;
+    }
+    store.markDone(id, report, { ...metrics(), companyName: report.company_name, verification });
   } catch (error) {
     console.error(`[agent] research ${id} failed`, error);
     store.markFailed(id, describeError(error), metrics());
+  }
+}
+
+/**
+ * Runs the verifier on a finished brief. It never fails the research: on any problem the
+ * researcher's brief is kept unchanged and the summary is null.
+ */
+async function verifyAndApply(
+  id: string,
+  report: Report,
+  deps: AgentDeps,
+  counts: { searches: number; pagesRead: number },
+): Promise<{ report: Report; summary: VerificationSummary | null; usage: Usage; aborted: boolean }> {
+  const unchanged = (usage: Usage = { inputTokens: 0, outputTokens: 0 }, aborted = false) => ({
+    report,
+    summary: null,
+    usage,
+    aborted,
+  });
+  if (!deps.store.addStep(id, "info", "Verifying the facts")) return unchanged(undefined, true);
+
+  try {
+    const result = await verifyBrief(report, {
+      createStream: deps.createStream,
+      model: deps.model,
+      onItem: (item) => {
+        const step = stepForItem(item);
+        if (!step || step.kind === "info") return;
+        if (step.kind === "search") counts.searches++;
+        if (step.kind === "fetch") counts.pagesRead++;
+        const label = step.label.replace(/^(Reading|Scanning): /, "Checking: ");
+        return deps.store.addStep(id, step.kind, label);
+      },
+    });
+    if (result.status === "aborted") return unchanged(result.usage, true);
+    if (result.status !== "ok") {
+      console.warn(`[agent] verifier for research ${id} ended with: ${result.status}; keeping the brief`);
+      return unchanged(result.usage);
+    }
+    return { ...applyVerification(report, result.value), usage: result.usage, aborted: false };
+  } catch (error) {
+    console.error(`[agent] verifier for research ${id} failed; keeping the brief`, error);
+    return unchanged();
   }
 }
 
@@ -108,5 +167,6 @@ function defaultDeps(): AgentDeps {
     model: getEnv().OPENAI_MODEL,
     createStream: (params) => streamResponse(openai, params),
     now: () => new Date(),
+    verify: getEnv().VERIFY_BRIEFS,
   };
 }

@@ -8,6 +8,11 @@ const EnvSchema = z.object({
   OPENAI_MODEL: z.string().min(1).default("gpt-6.1-sol"),
   // Evaluation only; falls back to OPENAI_MODEL. An empty value counts as unset.
   JUDGE_MODEL: z.preprocess((value) => value || undefined, z.string().min(1).optional()),
+  // Run the verifier agent after each research (default on); "false", "0", "no" or "off" disable it.
+  VERIFY_BRIEFS: z.preprocess(
+    (value) => (value === undefined || value === "" ? true : !["false", "0", "no", "off"].includes(String(value).toLowerCase())),
+    z.boolean(),
+  ),
   DAILY_RESEARCH_LIMIT: z.coerce.number().int().positive().default(10),
   DATABASE_PATH: z.string().min(1).default("./data/radar.db"),
 });

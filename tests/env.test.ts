@@ -8,9 +8,19 @@ describe("parseEnv", () => {
     expect(parseEnv({ OPENAI_API_KEY: validKey })).toEqual({
       OPENAI_API_KEY: validKey,
       OPENAI_MODEL: "gpt-6.1-sol",
+      VERIFY_BRIEFS: true,
       DAILY_RESEARCH_LIMIT: 10,
       DATABASE_PATH: "./data/radar.db",
     });
+  });
+
+  it("turns the verifier off with false-like values only", () => {
+    for (const value of ["false", "0", "no", "OFF"]) {
+      expect(parseEnv({ OPENAI_API_KEY: validKey, VERIFY_BRIEFS: value }).VERIFY_BRIEFS).toBe(false);
+    }
+    for (const value of ["true", "1", "", undefined]) {
+      expect(parseEnv({ OPENAI_API_KEY: validKey, VERIFY_BRIEFS: value }).VERIFY_BRIEFS).toBe(true);
+    }
   });
 
   it("treats an empty JUDGE_MODEL as unset", () => {
