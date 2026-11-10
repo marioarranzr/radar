@@ -225,3 +225,55 @@ describe("migrate", () => {
   });
 });
 
+describe("watchlist", () => {
+  it("follows a company once, case-insensitively, keeping its context", () => {
+    const first = store.createResearch({ query: "Acme Corp", context: "Selling HR software" });
+    const second = store.createResearch({ query: "acme corp" });
+
+    const watch = store.follow(first);
+    expect(store.follow(second)?.id).toBe(watch?.id);
+    expect(store.listWatchlist()).toHaveLength(1);
+    expect(watch).toMatchObject({ query: "Acme Corp", context: "Selling HR software", lastResearchId: first, intervalDays: 7 });
+    expect(store.follow("missing")).toBeNull();
+  });
+
+  it("links a refresh to the previous research", () => {
+    const first = store.createResearch({ query: "Acme Corp" });
+    const refresh = store.createResearch({ query: "Acme Corp", previousId: first });
+    expect(store.getResearch(refresh)?.previousId).toBe(first);
+    expect(store.getResearch(first)?.previousId).toBeNull();
+  });
+
+  it("is due when the last research finished more than the interval ago", () => {
+    const id = store.createResearch({ query: "Acme Corp" });
+    const watch = store.follow(id)!;
+    const createdAt = new Date(store.getResearch(id)!.createdAt);
+    const inEightDays = new Date(createdAt.getTime() + 8 * 86_400_000);
+
+    expect(store.dueWatches(inEightDays)).toHaveLength(0); // still queued
+    store.markRunning(id);
+    store.markDone(id, {});
+    expect(store.dueWatches(new Date(createdAt.getTime() + 86_400_000))).toHaveLength(0);
+    expect(store.dueWatches(inEightDays).map((w) => w.id)).toEqual([watch.id]);
+  });
+
+  it("is due right away when its last research was deleted, and unfollows", () => {
+    const id = store.createResearch({ query: "Acme Corp" });
+    const watch = store.follow(id)!;
+    store.deleteResearch(id);
+
+    expect(store.getWatch(watch.id)?.lastResearchId).toBeNull();
+    expect(store.dueWatches()).toHaveLength(1);
+    expect(store.unfollow(watch.id)).toBe(true);
+    expect(store.listWatchlist()).toHaveLength(0);
+  });
+
+  it("records the newest research of a watch", () => {
+    const first = store.createResearch({ query: "Acme Corp" });
+    const watch = store.follow(first)!;
+    const second = store.createResearch({ query: "Acme Corp", previousId: first });
+    store.recordRefresh(watch.id, second);
+    expect(store.getWatch(watch.id)?.lastResearchId).toBe(second);
+  });
+});
+

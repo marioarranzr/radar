@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS research (
   searches      INTEGER,
   pages_read    INTEGER,
   verification  TEXT,
+  previous_id   TEXT,
   started_at    TEXT,
   finished_at   TEXT,
   created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
@@ -33,3 +34,15 @@ CREATE TABLE IF NOT EXISTS research_steps (
   created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 CREATE INDEX IF NOT EXISTS idx_steps_research ON research_steps (research_id, id);
+
+-- Followed companies, refreshed on a schedule (docs/02-TRD.md §3.11).
+CREATE TABLE IF NOT EXISTS watchlist (
+  id               TEXT PRIMARY KEY,
+  query            TEXT NOT NULL,
+  context          TEXT,
+  last_research_id TEXT REFERENCES research(id) ON DELETE SET NULL,
+  interval_days    INTEGER NOT NULL DEFAULT 7 CHECK (interval_days > 0),
+  created_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_query ON watchlist (lower(query));
+

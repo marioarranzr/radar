@@ -39,6 +39,7 @@ const research = (overrides: Partial<Research> = {}): Research => ({
   searches: 3,
   pagesRead: 5,
   verification: null,
+  previousId: null,
   startedAt: "2026-10-14T10:00:00.000Z",
   finishedAt: "2026-10-14T10:01:14.000Z",
   createdAt: "2026-10-14T10:00:00.000Z",

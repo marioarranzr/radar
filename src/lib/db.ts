@@ -25,6 +25,8 @@ export interface Research {
   pagesRead: number | null;
   /** What the verifier agent checked (docs/02-TRD.md §3.9); null if it didn't run. */
   verification: VerificationSummary | null;
+  /** For a watchlist refresh: the research it updates. */
+  previousId: string | null;
   startedAt: string | null;
   finishedAt: string | null;
   createdAt: string;
@@ -82,6 +84,7 @@ function toResearch(row: Row): Research {
     searches: row.searches as number | null,
     pagesRead: row.pages_read as number | null,
     verification: (parseJson(row.verification ?? null) as VerificationSummary | null) ?? null,
+    previousId: (row.previous_id as string | null | undefined) ?? null,
     startedAt: row.started_at as string | null,
     finishedAt: row.finished_at as string | null,
     createdAt: row.created_at as string,
@@ -99,7 +102,7 @@ function toStep(row: Row): ResearchStep {
 }
 
 /** Columns added after the first release, as `name -> SQL type`. */
-const ADDED_COLUMNS: Record<string, string> = { verification: "TEXT" };
+const ADDED_COLUMNS: Record<string, string> = { verification: "TEXT", previous_id: "TEXT" };
 
 /** `CREATE TABLE IF NOT EXISTS` never alters existing tables, so add later columns when missing. */
 export function migrate(db: DatabaseSync): void {
@@ -148,12 +151,21 @@ const nowIso = () => new Date().toISOString();
 
 export function createStore(db: DatabaseSync) {
   return {
-    createResearch({ query, context }: { query: string; context?: string | null }): string {
+    createResearch({
+      query,
+      context,
+      previousId,
+    }: {
+      query: string;
+      context?: string | null;
+      previousId?: string | null;
+    }): string {
       const id = randomUUID();
-      db.prepare("INSERT INTO research (id, query, context) VALUES (?, ?, ?)").run(
+      db.prepare("INSERT INTO research (id, query, context, previous_id) VALUES (?, ?, ?, ?)").run(
         id,
         query,
         context ?? null,
+        previousId ?? null,
       );
       return id;
     },
@@ -287,6 +299,79 @@ export function createStore(db: DatabaseSync) {
     deleteResearch(id: string): boolean {
       return db.prepare("DELETE FROM research WHERE id = ?").run(id).changes > 0;
     },
+
+    // ── Watchlist (docs/02-TRD.md §3.11) ──
+
+    /** Follows the company of a research (idempotent per company, case-insensitive). */
+    follow(researchId: string): Watch | null {
+      const research = this.getResearch(researchId);
+      if (!research) return null;
+      db.prepare(
+        `INSERT INTO watchlist (id, query, context, last_research_id) VALUES (?, ?, ?, ?)
+         ON CONFLICT DO NOTHING`,
+      ).run(randomUUID(), research.query, research.context, researchId);
+      return this.getWatchByQuery(research.query);
+    },
+
+    getWatch(id: string): Watch | null {
+      const row = db.prepare("SELECT * FROM watchlist WHERE id = ?").get(id) as Row | undefined;
+      return row ? toWatch(row) : null;
+    },
+
+    getWatchByQuery(query: string): Watch | null {
+      const row = db.prepare("SELECT * FROM watchlist WHERE lower(query) = lower(?)").get(query) as
+        | Row
+        | undefined;
+      return row ? toWatch(row) : null;
+    },
+
+    listWatchlist(): Watch[] {
+      return (db.prepare("SELECT * FROM watchlist ORDER BY created_at DESC, rowid DESC").all() as Row[]).map(toWatch);
+    },
+
+    unfollow(id: string): boolean {
+      return db.prepare("DELETE FROM watchlist WHERE id = ?").run(id).changes > 0;
+    },
+
+    /** Points the watch at its newest research. */
+    recordRefresh(watchId: string, researchId: string): void {
+      db.prepare("UPDATE watchlist SET last_research_id = ? WHERE id = ?").run(researchId, watchId);
+    },
+
+    /** Watches whose last research has finished and is older than their interval (or is missing). */
+    dueWatches(now: Date = new Date()): Watch[] {
+      const rows = db
+        .prepare(
+          `SELECT w.* FROM watchlist w
+             LEFT JOIN research r ON r.id = w.last_research_id
+            WHERE r.id IS NULL
+               OR (r.status IN ('done', 'failed')
+                   AND r.created_at <= strftime('%Y-%m-%dT%H:%M:%fZ', ?, '-' || w.interval_days || ' days'))
+            ORDER BY w.created_at`,
+        )
+        .all(now.toISOString()) as Row[];
+      return rows.map(toWatch);
+    },
+  };
+}
+
+export interface Watch {
+  id: string;
+  query: string;
+  context: string | null;
+  lastResearchId: string | null;
+  intervalDays: number;
+  createdAt: string;
+}
+
+function toWatch(row: Row): Watch {
+  return {
+    id: row.id as string,
+    query: row.query as string,
+    context: row.context as string | null,
+    lastResearchId: row.last_research_id as string | null,
+    intervalDays: row.interval_days as number,
+    createdAt: row.created_at as string,
   };
 }
 
