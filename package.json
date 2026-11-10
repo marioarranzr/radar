@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "agent:try": "tsx scripts/try-agent.ts",
     "agent:eval": "tsx scripts/eval.ts",
-    "agent:judge": "tsx scripts/judge.ts"
+    "agent:judge": "tsx scripts/judge.ts",
+    "agent:verify-eval": "tsx scripts/verify-eval.ts"
   },
   "dependencies": {
     "next": "15.5.27",

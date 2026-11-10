@@ -152,7 +152,7 @@ After the researcher submits a valid brief, a second agent checks it before it i
 | Model | `OPENAI_MODEL` |
 | Tools | `web_search` (to open the cited pages) + strict `submit_verification` function |
 | Effort | `reasoning.effort: "low"` (targeted checks, not open research) |
-| Switch | `VERIFY_BRIEFS` (default `true`) |
+| Switch | `VERIFY_BRIEFS` (default `false`: opt-in, see the decision log) |
 
 It receives the brief with every key fact and recent signal numbered, opens the relevant cited
 page for each and returns a verdict per item: `supported`, `unsupported` or `unverifiable`.
@@ -194,7 +194,7 @@ rebinding) and non-GET requests with a non-local `Origin` are rejected with 403 
 OPENAI_API_KEY=                # required, server only
 OPENAI_MODEL=gpt-6.1-sol
 JUDGE_MODEL=                  # optional, evaluation only; defaults to OPENAI_MODEL
-VERIFY_BRIEFS=true            # run the verifier agent after each research
+VERIFY_BRIEFS=false           # opt-in: run the verifier agent after each research
 SEARCH_CONTEXT_SIZE=medium    # low | medium | high: web content per search (the main cost driver)
 DAILY_RESEARCH_LIMIT=10
 DATABASE_PATH=./data/radar.db
@@ -271,5 +271,6 @@ tests/
 | 2026-11-10 | Small in-code migration adds new columns to existing databases | Asking to delete `data/radar.db` | Owners keep their history across schema changes |
 | 2026-11-10 | PDF export through the browser's print dialog and print CSS | A PDF library (e.g. react-pdf, Puppeteer) | No new dependency; the browser already renders the brief well |
 | 2026-11-10 | One in-process queue, 2 concurrent runs, for single and batch research | Unbounded `after()` per request; an external job queue | Bounds cost and rate limits with no new service; enough for a local tool |
+| 2026-11-10 | **Verifier off by default** (`VERIFY_BRIEFS=false`) | On by default | Measured on the 10 eval briefs: +$0.065 (+39 %) and +16 s per brief, 4 of 124 claims downgraded (all blocked pages or nuances, no real error caught), judge scores unchanged. Kept as an opt-in safety net |
 | 2026-10-14 | `tsx` to run `scripts/` | `node --experimental-strip-types` | Node can't resolve the `@/` path alias; `tsx` honours tsconfig paths |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |

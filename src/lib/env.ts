@@ -8,9 +8,10 @@ const EnvSchema = z.object({
   OPENAI_MODEL: z.string().min(1).default("gpt-6.1-sol"),
   // Evaluation only; falls back to OPENAI_MODEL. An empty value counts as unset.
   JUDGE_MODEL: z.preprocess((value) => value || undefined, z.string().min(1).optional()),
-  // Run the verifier agent after each research (default on); "false", "0", "no" or "off" disable it.
+  // Run the verifier agent after each research (default off, see docs/eval-results.md);
+  // "true", "1", "yes" or "on" enable it.
   VERIFY_BRIEFS: z.preprocess(
-    (value) => (value === undefined || value === "" ? true : !["false", "0", "no", "off"].includes(String(value).toLowerCase())),
+    (value) => ["true", "1", "yes", "on"].includes(String(value ?? "").toLowerCase()),
     z.boolean(),
   ),
   // How much web content each search returns to the researcher (the main cost driver).

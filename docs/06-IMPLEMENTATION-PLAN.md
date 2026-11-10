@@ -107,7 +107,7 @@
 - [x] **P10.1** `verification` column with an in-code migration for existing databases.
 - [x] **P10.2** Verifier agent (TRD §3.9) wired into the research run, with tests driven by a fake model.
 - [x] **P10.3** Progress steps and the brief's footer show the verification.
-- [ ] **P10.4** Eval with and without the verifier; compare judge scores, time and cost.
+- [x] **P10.4** Eval with and without the verifier; compare judge scores, time and cost.
 
 **Done:** the verifier measurably reduces unsupported claims in the eval.
 

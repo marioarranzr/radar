@@ -129,6 +129,8 @@ Each gets its detailed specification here when its phase starts.
 - The brief's footer says how many facts were verified and how many were downgraded.
 - Success: the judge's groundedness score and share of supported claims go up compared with briefs
   produced without the verifier, at an acceptable extra cost and time.
+- **Outcome (2026-11-10):** not met on the evaluation set — the briefs were already well grounded,
+  so the verifier changed little for +39 % cost. It ships as an opt-in (`VERIFY_BRIEFS=true`).
 
 ### F14 · Export (phase 15)
 - From a brief: "Download .md" saves a Markdown file named after the company, and "Print / PDF"

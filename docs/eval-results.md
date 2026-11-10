@@ -62,6 +62,25 @@ models tend to rate their own output favourably; treat these as an upper bound a
 `JUDGE_MODEL` for definitive numbers. Relevance is the lowest score: the briefs are accurate, and
 the next gains are in making pains and questions more specific to a sales conversation.
 
+## Verifier agent
+
+Run on 2026-11-10 with `npm run agent:verify-eval`: the verifier (TRD §3.9) re-checked the same ten
+stored briefs, so the research itself stayed fixed and only the verifier's effect was measured.
+
+| Metric | Result |
+|---|---|
+| Claims checked | 124 (12–13 per brief) |
+| Confirmed facts downgraded | 4 (3 %): two blocked or JS-only pages, one "latest round" that a page can't prove is still the latest, one employee count with a different source date |
+| Recent signals removed | 0 |
+| Out-of-range indexes returned (ignored by design) | 2 |
+| Judge groundedness of the 4 changed briefs | 5, 4, 5, 5 — unchanged |
+| Extra time / cost per brief | +16 s / +$0.065 (+39 % on the research cost) |
+
+**Decision:** the verifier ships **off by default** (`VERIFY_BRIEFS=false`). On this set the briefs
+were already well grounded, so a second agent added cost and latency without catching a real error.
+It stays available as an opt-in safety net — for example with a cheaper researcher model, where
+the trade-off may flip.
+
 ## Observations
 
 - 10/10 runs produced a valid brief on the first request: no reminders, no validation retries,
