@@ -84,7 +84,7 @@
 
 ## Phase 7 · Showcase
 - [x] **P7.1** GitHub Actions CI: lint, tests and build on every push, with a README badge.
-- [ ] **P7.2** Animated demo in the README (type a company → live steps → brief).
+- [x] **P7.2** Animated demo in the README (type a company → live steps → brief).
 
 **Done:** a visitor sees the app working and a green build without cloning the repo.
 

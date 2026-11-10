@@ -10,6 +10,10 @@ Type a company name; an AI agent searches the web, reads the relevant pages and 
 **one-page brief with cited sources** in about a minute: what they sell and to whom, business
 model, key facts, recent signals, likely pains and questions for a first call.
 
+<p align="center">
+  <img src="docs/images/demo.gif" alt="Demo: typing Cabify, the agent's live search and reading steps, then the finished brief with key facts, recent signals and sources" width="720">
+</p>
+
 ## Agent automation, twice
 
 **1. In the product — an agent, not a chatbot.**
@@ -44,10 +48,6 @@ automate: deciding what to build and holding the work to a standard.
 
 The result doubles as a **reusable template** for building software with AI agents — see
 [Built document-first](#built-document-first).
-
-<p align="center">
-  <img src="docs/images/brief.jpg" alt="A Radar brief for a company, with summary, key facts and sources" width="720">
-</p>
 
 ## How the agent works
 
