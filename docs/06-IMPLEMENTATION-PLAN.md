@@ -125,7 +125,7 @@
 ## Phase 13 · Batch research
 - [x] **P13.1** Run queue with bounded concurrency (TRD §3.10) used by every research.
 - [x] **P13.2** `POST /api/research/batch` with validation and the daily limit.
-- [ ] **P13.3** "Research several" on the home page (paste or CSV) and a live-refreshing history.
+- [x] **P13.3** "Research several" on the home page (paste or CSV) and a live-refreshing history.
 
 **Done:** 10 companies from a CSV end up as 10 briefs in the history.
 

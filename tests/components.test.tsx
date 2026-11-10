@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { BatchResearchForm } from "@/components/BatchResearchForm";
 import { HistoryList } from "@/components/HistoryList";
 import { NewResearchForm } from "@/components/NewResearchForm";
 import { ReportView } from "@/components/ReportView";
@@ -9,7 +10,8 @@ import type { Research } from "@/lib/db";
 import { validReport } from "./fixtures/report";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh: vi.fn() }) }));
+const refresh = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
 
 const fetchMock = vi.fn();
 const json = (status: number, body: unknown) =>
@@ -19,6 +21,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
   fetchMock.mockReset();
   push.mockReset();
+  refresh.mockReset();
 });
 afterEach(cleanup);
 
@@ -71,6 +74,39 @@ describe("NewResearchForm", () => {
 
     expect(await screen.findByText(/reached today's limit/)).toBeDefined();
     expect(screen.getByRole("button", { name: "Research" })).toHaveProperty("disabled", true);
+  });
+});
+
+describe("BatchResearchForm", () => {
+  it("counts the companies and queues them", async () => {
+    fetchMock.mockReturnValueOnce(json(200, { ids: ["a", "b"] }));
+    render(<BatchResearchForm remaining={5} />);
+
+    fireEvent.change(screen.getByLabelText("Companies (one per line)"), { target: { value: "Acme\nGlobex\nacme" } });
+    expect(screen.getByText("2 companies · 5 left today")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Research 2 companies" }));
+
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/research/batch");
+    expect(JSON.parse(init.body)).toEqual({ queries: ["Acme", "Globex"] });
+  });
+
+  it("won't submit more companies than are left today", () => {
+    render(<BatchResearchForm remaining={1} />);
+    fireEvent.change(screen.getByLabelText("Companies (one per line)"), { target: { value: "Acme\nGlobex" } });
+    expect(screen.getByRole("button", { name: "Research 2 companies" })).toHaveProperty("disabled", true);
+  });
+
+  it("fills the list from a CSV file", async () => {
+    render(<BatchResearchForm remaining={5} />);
+    const file = new File(["company,website\nAcme,acme.com\nGlobex,globex.com"], "list.csv", { type: "text/csv" });
+
+    fireEvent.change(screen.getByLabelText("Upload CSV"), { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect((screen.getByLabelText("Companies (one per line)") as HTMLTextAreaElement).value).toBe("Acme\nGlobex"),
+    );
   });
 });
 
