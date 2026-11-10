@@ -98,7 +98,7 @@
 
 ## Phase 9 · LLM-as-judge evaluation
 - [x] **P9.1** Extract the shared agent loop (TRD §3.7); the researcher's tests pass unchanged.
-- [ ] **P9.2** Judge agent (TRD §3.8) with a strict schema and tests driven by a fake model.
+- [x] **P9.2** Judge agent (TRD §3.8) with a strict schema and tests driven by a fake model.
 - [ ] **P9.3** `npm run agent:judge` grades existing briefs; `npm run agent:eval` grades each new one. Judge the 10 evaluation briefs.
 
 **Done:** every eval run produces objective quality scores next to time and cost.

@@ -1,54 +1,20 @@
 import OpenAI from "openai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { runResearchAgent, type AgentDeps, type AgentRequest, type AgentStream } from "@/agent/run";
+import { runResearchAgent, type AgentDeps } from "@/agent/run";
 import { createStore, openDatabase, type Store } from "@/lib/db";
 import { validReport } from "./fixtures/report";
+import {
+  fakeModel,
+  functionCall,
+  message,
+  openPage,
+  refusal,
+  response,
+  search,
+  type Item,
+} from "./helpers/fake-model";
 
-type Item = OpenAI.Responses.ResponseOutputItem;
-type Response = OpenAI.Responses.Response;
-
-const search = (query: string) =>
-  ({ type: "web_search_call", id: `ws_${query}`, status: "completed", action: { type: "search", queries: [query] } }) as Item;
-const openPage = (url: string) =>
-  ({ type: "web_search_call", id: `ws_${url}`, status: "completed", action: { type: "open_page", url } }) as Item;
-const submit = (report: unknown, callId = "call_submit") =>
-  ({ type: "function_call", name: "submit_report", call_id: callId, arguments: JSON.stringify(report) }) as Item;
-const message = (text: string) =>
-  ({ type: "message", id: "msg", role: "assistant", status: "completed", content: [{ type: "output_text", text, annotations: [] }] }) as Item;
-const refusal = () =>
-  ({ type: "message", id: "msg", role: "assistant", status: "completed", content: [{ type: "refusal", refusal: "No." }] }) as Item;
-
-let responseCount = 0;
-function response(output: Item[], extra: Partial<Response> = {}): Response {
-  return {
-    id: `resp_${++responseCount}`,
-    status: "completed",
-    output,
-    incomplete_details: null,
-    usage: { input_tokens: 100, output_tokens: 50 },
-    ...extra,
-  } as Response;
-}
-
-/** A fake model that plays back one scripted response per request. */
-function fakeModel(responses: Array<Response | Error>) {
-  const requests: AgentRequest[] = [];
-  const createStream = (params: AgentRequest): AgentStream => {
-    requests.push(params);
-    const next = responses.shift();
-    if (!next) throw new Error("Fake model ran out of scripted responses");
-    const listeners: Array<(event: { item: Item }) => void> = [];
-    return {
-      on: (_event, listener) => listeners.push(listener),
-      finalResponse: async () => {
-        if (next instanceof Error) throw next;
-        for (const item of next.output) listeners.forEach((listener) => listener({ item }));
-        return next;
-      },
-    };
-  };
-  return { createStream, requests };
-}
+const submit = (report: unknown, callId = "call_submit") => functionCall("submit_report", report, callId);
 
 let store: Store;
 let id: string;
