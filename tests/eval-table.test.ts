@@ -27,7 +27,9 @@ const row = (seconds: number, cost: number, j: Judgement | null): EvalRow => ({
 
 describe("eval table", () => {
   it("estimates cost from tokens and searches", () => {
-    expect(estimateCost(50_000, 2_000, 3)).toBeCloseTo(0.1 + 0.02 + 0.03);
+    expect(estimateCost("gpt-6.1-sol", 50_000, 2_000, 3)).toBeCloseTo(0.1 + 0.02 + 0.03);
+    expect(estimateCost("gpt-6-luna", 50_000, 2_000, 0)).toBeCloseTo(0.005 + 0.001);
+    expect(estimateCost("unknown-model", 50_000, 2_000)).toBeCloseTo(0.12);
   });
 
   it("computes the median", () => {

@@ -3,13 +3,19 @@ import { supportedRatio, type Judgement } from "@/eval/judge";
 
 // Results table shared by `npm run agent:eval` and `npm run agent:judge`.
 
-// Rough list prices (USD, gpt-6.1-sol); check https://openai.com/api/pricing.
-const USD_PER_INPUT_TOKEN = 2 / 1_000_000;
-const USD_PER_OUTPUT_TOKEN = 10 / 1_000_000;
+// List prices in USD per 1M tokens (input, output); check https://openai.com/api/pricing.
+// Estimates only: cached-input discounts are ignored, so real bills are lower.
+export const MODEL_PRICES: Record<string, { input: number; output: number }> = {
+  "gpt-6-astra": { input: 10, output: 50 },
+  "gpt-6.1-sol": { input: 2, output: 10 },
+  "gpt-6-luna": { input: 0.1, output: 0.5 },
+};
+const DEFAULT_MODEL = "gpt-6.1-sol";
 const USD_PER_WEB_SEARCH = 10 / 1_000;
 
-export function estimateCost(tokensIn: number, tokensOut: number, searches = 0): number {
-  return tokensIn * USD_PER_INPUT_TOKEN + tokensOut * USD_PER_OUTPUT_TOKEN + searches * USD_PER_WEB_SEARCH;
+export function estimateCost(model: string, tokensIn: number, tokensOut: number, searches = 0): number {
+  const price = MODEL_PRICES[model] ?? MODEL_PRICES[DEFAULT_MODEL];
+  return (tokensIn * price.input + tokensOut * price.output) / 1_000_000 + searches * USD_PER_WEB_SEARCH;
 }
 
 export function researchSeconds(research: Research): number {

@@ -3,13 +3,9 @@
 
 import { runResearchAgent } from "@/agent/run";
 import { getStore } from "@/lib/db";
+import { estimateCost } from "@/eval/table";
 import { getEnv } from "@/lib/env";
 
-// Rough list prices (USD, gpt-6.1-sol) for the cost estimate printed at the end; not used by the app.
-// Check https://openai.com/api/pricing for current prices, including the web search tool call fee.
-const USD_PER_INPUT_TOKEN = 2 / 1_000_000;
-const USD_PER_OUTPUT_TOKEN = 10 / 1_000_000;
-const USD_PER_WEB_SEARCH = 10 / 1_000;
 
 async function main() {
   const [query, context] = process.argv.slice(2);
@@ -42,10 +38,12 @@ async function main() {
   const research = store.getResearch(id);
   if (!research) throw new Error("The research row disappeared.");
   const seconds = ((Date.now() - startedAt) / 1000).toFixed(0);
-  const cost =
-    (research.inputTokens ?? 0) * USD_PER_INPUT_TOKEN +
-    (research.outputTokens ?? 0) * USD_PER_OUTPUT_TOKEN +
-    (research.searches ?? 0) * USD_PER_WEB_SEARCH;
+  const cost = estimateCost(
+    env.OPENAI_MODEL,
+    research.inputTokens ?? 0,
+    research.outputTokens ?? 0,
+    research.searches ?? 0,
+  );
 
   console.log(`\nStatus: ${research.status} in ${seconds} s`);
   console.log(

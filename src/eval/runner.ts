@@ -31,7 +31,12 @@ export async function evaluateResearch(research: Research, judge = true): Promis
     status: research.status === "done" ? "✅ done" : `❌ ${research.error ?? research.status}`,
     seconds: researchSeconds(research),
     sources: report.success ? report.data.sources.length : null,
-    researchCost: estimateCost(research.inputTokens ?? 0, research.outputTokens ?? 0, research.searches ?? 0),
+    researchCost: estimateCost(
+      getEnv().OPENAI_MODEL,
+      research.inputTokens ?? 0,
+      research.outputTokens ?? 0,
+      research.searches ?? 0,
+    ),
     judgement: null,
     judgeCost: 0,
   };
@@ -43,7 +48,7 @@ export async function evaluateResearch(research: Research, judge = true): Promis
     model: judgeModel(),
     now: () => new Date(),
   });
-  row.judgeCost = estimateCost(result.usage.inputTokens, result.usage.outputTokens);
+  row.judgeCost = estimateCost(judgeModel(), result.usage.inputTokens, result.usage.outputTokens);
   if (result.status === "ok") row.judgement = result.value;
   else console.warn(`  (judge for ${research.query} ended with: ${result.status})`);
   return row;

@@ -37,7 +37,7 @@ async function main() {
     const started = Date.now();
     const result = await verifyBrief(report.data, { createStream, model: getEnv().OPENAI_MODEL });
     const seconds = (Date.now() - started) / 1000;
-    const cost = estimateCost(result.usage.inputTokens, result.usage.outputTokens);
+    const cost = estimateCost(getEnv().OPENAI_MODEL, result.usage.inputTokens, result.usage.outputTokens);
     totalSeconds += seconds;
     totalCost += cost;
     if (result.status !== "ok") {
