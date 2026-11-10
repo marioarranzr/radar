@@ -20,7 +20,7 @@ export interface AgentDeps {
   now: () => Date;
   /** Run the verifier agent on the finished brief (VERIFY_BRIEFS). */
   verify: boolean;
-  /** Web content returned per search (SEARCH_CONTEXT_SIZE); defaults to medium. */
+  /** Web content returned per search (SEARCH_CONTEXT_SIZE); defaults to low. */
   searchContextSize?: "low" | "medium" | "high";
 }
 
@@ -66,7 +66,7 @@ export async function runResearchAgent(id: string, deps: AgentDeps = defaultDeps
       model: deps.model,
       instructions: SYSTEM_PROMPT,
       input: buildUserMessage({ query: research.query, context: research.context, today: deps.now() }),
-      tools: [{ type: "web_search", search_context_size: deps.searchContextSize ?? "medium" }],
+      tools: [{ type: "web_search", search_context_size: deps.searchContextSize ?? "low" }],
       submit: {
         name: "submit_report",
         description:

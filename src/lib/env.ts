@@ -15,7 +15,8 @@ const EnvSchema = z.object({
     z.boolean(),
   ),
   // How much web content each search returns to the researcher (the main cost driver).
-  SEARCH_CONTEXT_SIZE: z.enum(["low", "medium", "high"]).default("medium"),
+  // Default "low": same quality at -18 % cost and -40 % time on the eval set (docs/eval-results.md).
+  SEARCH_CONTEXT_SIZE: z.enum(["low", "medium", "high"]).default("low"),
   DAILY_RESEARCH_LIMIT: z.coerce.number().int().positive().default(10),
   DATABASE_PATH: z.string().min(1).default("./data/radar.db"),
 });

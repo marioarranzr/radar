@@ -22,9 +22,9 @@
 | Goal | Target | Result | Status |
 |---|---|---|---|
 | O1 Useful briefs | ≥ 8/10 rated useful | Automated quality checks pass 10/10 (below); the owner's usefulness rating is pending | ⏳ |
-| O2 Fast | p50 ≤ 90 s | p50 **70 s** (max 96 s) | ✅ |
+| O2 Fast | p50 ≤ 90 s | p50 **42 s** with the default `low` search context (70 s with `medium`) | ✅ |
 | O3 Reliable | 100 % with ≥ 3 sources | **10/10**, 8–15 sources each | ✅ |
-| O4 Cheap | avg ≤ $0.15 | avg **$0.168** (upper bound) | ⚠️ 12 % over |
+| O4 Cheap | avg ≤ $0.15 | avg **$0.138** with the default `low` search context ($0.168 with `medium`) | ✅ |
 
 ## Automated quality checks
 
@@ -62,6 +62,24 @@ models tend to rate their own output favourably; treat these as an upper bound a
 `JUDGE_MODEL` for definitive numbers. Relevance is the lowest score: the briefs are accurate, and
 the next gains are in making pains and questions more specific to a sales conversation.
 
+## Cost experiment: search context size (phase 8)
+
+Run on 2026-11-10 with `SEARCH_CONTEXT_SIZE=low VERIFY_BRIEFS=false npm run agent:eval` and compared
+with the original run (`medium`, researched 2026-10-14, judged 2026-11-10). Typeform first failed on
+a bug the experiment exposed (a web search item without an `action`, now fixed) and was rerun.
+
+| | `medium` | `low` | Change |
+|---|---|---|---|
+| Valid briefs | 10/10 | 10/10 | = |
+| Median time | 70 s | **42 s** | −40 % |
+| Avg research cost | $0.168 | **$0.138** | −18 % |
+| Grounded / complete | 4.9 / 4.4 | 4.6 / 4.6 | ≈ |
+| Relevant / recent | 4.1 / 4.5 | 4.2 / 4.8 | ≈ |
+| Claims supported | 50/50 | 49/50 | ≈ |
+
+**Decision:** `low` is now the default. It meets O4 and is much faster; quality moves within the
+judge's noise.
+
 ## Verifier agent
 
 Run on 2026-11-10 with `npm run agent:verify-eval`: the verifier (TRD §3.9) re-checked the same ten
@@ -90,9 +108,9 @@ the trade-off may flip.
 - Cost is dominated by input tokens (~40–68k per run): web content read during search. Output is
   ~2–3k tokens.
 
-## Next tuning experiments (for O4)
+## Next tuning experiments
 
-1. `search_context_size: "low"` — less retrieved content per search, the main cost driver.
+1. ~~`search_context_size: "low"`~~ — done, now the default (above).
 2. `reasoning.effort: "low"` — fewer, more consolidated tool calls.
 3. Measure the real bill (cached input is cheaper than this estimate) before changing anything.
 

@@ -67,7 +67,7 @@ The only function tool is `submit_report`, used to get the structured brief. Tur
 
 | Tool | Type | Config |
 |---|---|---|
-| Web search | `web_search` (built-in) | `search_context_size` from `SEARCH_CONTEXT_SIZE` (default `"medium"`); reasoning models can also `open_page` and `find_in_page` |
+| Web search | `web_search` (built-in) | `search_context_size` from `SEARCH_CONTEXT_SIZE` (default `"low"`, see the decision log); reasoning models can also `open_page` and `find_in_page` |
 | `submit_report` | `function`, `strict: true` | `parameters` = `ReportSchema` as JSON Schema (§3.5) |
 
 - `tool_choice: "auto"`. The instructions state that the model **must** finish by calling `submit_report`.
@@ -207,7 +207,7 @@ OPENAI_API_KEY=                # required, server only
 OPENAI_MODEL=gpt-6.1-sol
 JUDGE_MODEL=                  # optional, evaluation only; defaults to OPENAI_MODEL
 VERIFY_BRIEFS=false           # opt-in: run the verifier agent after each research
-SEARCH_CONTEXT_SIZE=medium    # low | medium | high: web content per search (the main cost driver)
+SEARCH_CONTEXT_SIZE=low       # low | medium | high: web content per search (the main cost driver)
 DAILY_RESEARCH_LIMIT=10
 DATABASE_PATH=./data/radar.db
 ```
@@ -286,5 +286,6 @@ tests/
 | 2026-11-10 | **Verifier off by default** (`VERIFY_BRIEFS=false`) | On by default | Measured on the 10 eval briefs: +$0.065 (+39 %) and +16 s per brief, 4 of 124 claims downgraded (all blocked pages or nuances, no real error caught), judge scores unchanged. Kept as an opt-in safety net |
 | 2026-11-10 | In-process scheduler for the watchlist | OS cron, a hosted scheduler | Nothing to install; a local tool only needs to refresh while it's running |
 | 2026-11-10 | New signals computed at read time from `previous_id` | Storing a diff | No duplicated data; the comparison can improve without a migration |
+| 2026-11-10 | **`search_context_size: "low"` by default** | `"medium"` | Same 10 companies: avg cost $0.168 → $0.138 (meets O4), median 70 s → 42 s, judge scores within noise (49/50 vs 50/50 claims supported) |
 | 2026-10-14 | `tsx` to run `scripts/` | `node --experimental-strip-types` | Node can't resolve the `@/` path alias; `tsx` honours tsconfig paths |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |
