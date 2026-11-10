@@ -26,6 +26,9 @@ const { POST: createResearch } = await import("@/app/api/research/route");
 const { GET: getResearch, DELETE: deleteResearch } = await import("@/app/api/research/[id]/route");
 const { POST: retryResearch } = await import("@/app/api/research/[id]/retry/route");
 const { POST: createBatch } = await import("@/app/api/research/batch/route");
+const { POST: follow } = await import("@/app/api/watchlist/route");
+const { DELETE: unfollow } = await import("@/app/api/watchlist/[id]/route");
+const { POST: refreshNow } = await import("@/app/api/watchlist/[id]/refresh/route");
 
 const post = (body: unknown, contentType = "application/json") =>
   new Request("http://localhost/api/research", {
@@ -215,6 +218,52 @@ describe("POST /api/research/batch", () => {
     const response = await createBatch(batch([]));
     expect(response.status).toBe(400);
     expect((await response.json()).error).toBe("Add at least one company.");
+  });
+});
+
+describe("watchlist routes", () => {
+  const followRequest = (body: unknown) =>
+    new Request("http://localhost/api/watchlist", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  const done = (query: string) => {
+    const id = mocks.store.createResearch({ query });
+    mocks.store.markRunning(id);
+    mocks.store.markDone(id, {});
+    return id;
+  };
+
+  it("follows, refreshes and unfollows a company", async () => {
+    const researchId = done("Acme Corp");
+
+    const followed = await follow(followRequest({ researchId }));
+    expect(followed.status).toBe(200);
+    const { watch } = await followed.json();
+
+    const refreshed = await refreshNow(empty, ctx(watch.id));
+    expect(refreshed.status).toBe(200);
+    const { id } = await refreshed.json();
+    expect(mocks.store.getResearch(id)?.previousId).toBe(researchId);
+    expect(mocks.after).toHaveBeenCalledOnce();
+
+    expect((await refreshNow(empty, ctx(watch.id))).status).toBe(409); // the refresh is still queued
+    expect((await unfollow(empty, ctx(watch.id))).status).toBe(204);
+    expect((await unfollow(empty, ctx(watch.id))).status).toBe(404);
+  });
+
+  it("returns 404 for unknown research or watches", async () => {
+    expect((await follow(followRequest({ researchId: "missing" }))).status).toBe(404);
+    expect((await follow(followRequest({}))).status).toBe(400);
+    expect((await refreshNow(empty, ctx("missing"))).status).toBe(404);
+  });
+
+  it("returns 429 when a refresh would exceed the daily limit", async () => {
+    const researchId = done("Acme Corp");
+    done("Globex"); // limit in these tests is 2
+    const { watch } = await (await follow(followRequest({ researchId }))).json();
+    expect((await refreshNow(empty, ctx(watch.id))).status).toBe(429);
   });
 });
 

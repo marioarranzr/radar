@@ -25,6 +25,11 @@ function getRunQueue(): RunQueue {
   return globalForQueue.__radarQueue;
 }
 
+/** Queues a research right away (for callers outside a request, e.g. the scheduler). */
+export function enqueueResearch(id: string): void {
+  void getRunQueue().enqueue(id);
+}
+
 /** Queues the research after the response is sent (at most 2 run at once). */
 export function startResearchAgent(id: string): void {
   after(() => getRunQueue().enqueue(id));
