@@ -45,6 +45,16 @@ export function stepForItem(item: OpenAI.Responses.ResponseOutputItem): Step | n
     }
     return null;
   }
+  if (item.type === "function_call" && item.name === "lookup_company_facts") {
+    const name = (() => {
+      try {
+        return (JSON.parse(item.arguments) as { name?: unknown }).name;
+      } catch {
+        return undefined;
+      }
+    })();
+    return { kind: "info", label: typeof name === "string" && name.trim() ? truncate(`Checking Wikidata: ${name.trim()}`) : "Checking Wikidata" };
+  }
   if (item.type === "function_call" && item.name === "submit_report") {
     return { kind: "info", label: "Writing the brief" };
   }

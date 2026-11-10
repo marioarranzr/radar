@@ -5,6 +5,7 @@ import { buildUserMessage, SUBMIT_REPORT_REMINDER, SYSTEM_PROMPT } from "@/agent
 import { ReportSchema, reportInputSchema, type Report } from "@/agent/schema";
 import { stripCitationMarkers } from "@/agent/sanitize";
 import { stepForItem } from "@/agent/steps";
+import { lookupCompanyFactsTool } from "@/agent/tools/wikidata";
 import { applyVerification, verifyBrief } from "@/agent/verify";
 import { getStore, type Store, type VerificationSummary } from "@/lib/db";
 import { getEnv } from "@/lib/env";
@@ -75,6 +76,7 @@ export async function runResearchAgent(id: string, deps: AgentDeps = defaultDeps
         parameters: reportInputSchema(),
         sanitize: stripCitationMarkers,
       },
+      functions: [lookupCompanyFactsTool],
       reminder: SUBMIT_REPORT_REMINDER,
       onItem: (item) => {
         const step = stepForItem(item);

@@ -119,7 +119,7 @@
 
 ## Phase 12 · Custom tools
 - [x] **P12.1** The shared loop executes client functions (TRD §3.7, §3.12).
-- [ ] **P12.2** `lookup_company_facts` backed by Wikidata, wired into the researcher, with tests on recorded responses.
+- [x] **P12.2** `lookup_company_facts` backed by Wikidata, wired into the researcher, with tests on recorded responses.
 
 **Done:** the agent calls our own tool when relevant and its results appear in the brief's sources.
 

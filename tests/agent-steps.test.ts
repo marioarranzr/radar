@@ -46,6 +46,11 @@ describe("stepForItem", () => {
     expect(step?.label.endsWith("…")).toBe(true);
   });
 
+  it("describes a Wikidata lookup", () => {
+    const item = { type: "function_call", name: "lookup_company_facts", arguments: '{"name":"Acme"}', call_id: "c" } as Item;
+    expect(stepForItem(item)).toEqual({ kind: "info", label: "Checking Wikidata: Acme" });
+  });
+
   it("announces the brief when submit_report is called", () => {
     const item = { type: "function_call", name: "submit_report", arguments: "{}", call_id: "c1" } as Item;
     expect(stepForItem(item)).toEqual({ kind: "info", label: "Writing the brief" });

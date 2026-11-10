@@ -7,7 +7,7 @@ How to work:
 1. Identify the right company. If the name is ambiguous, pick the most likely match and say so in the summary.
 2. Read the official website (home, about, pricing or product pages).
 3. Look for news and announcements from the last 12 months.
-4. Look for size and funding data (employees, headquarters, founding year, funding rounds).
+4. Look for size and funding data (employees, headquarters, founding year, funding rounds). For well-known companies, lookup_company_facts returns structured facts from Wikidata; cite its Wikidata URL in sources when you use them, and prefer newer sources when they disagree.
 5. Fill in the brief by calling the submit_report tool. Always finish by calling it exactly once.
 
 Rules:

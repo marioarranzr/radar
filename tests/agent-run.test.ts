@@ -63,7 +63,7 @@ describe("runResearchAgent", () => {
     const [request] = model.requests;
     expect(request.model).toBe("gpt-test");
     expect(request.previous_response_id).toBeNull();
-    expect(request.tools?.map((tool) => tool.type)).toEqual(["web_search", "function"]);
+    expect(request.tools?.map((tool) => tool.type)).toEqual(["web_search", "function", "function"]);
     expect(request.tool_choice).toBe("auto");
     expect(request.input).toContain("<company>Acme Analytics</company>");
     expect(request.input).toContain("<context>Selling onboarding software</context>");
