@@ -76,11 +76,11 @@ Fixed sections, always in this order:
 
 ## 6. Out of scope (NOT built in the MVP)
 
-- **Users, login and multi-user** (added once there are users other than me).
-- **Deploying to the internet**: the MVP only runs locally.
+- **Users, login and multi-user** (added once there are users other than me) _(roadmap, §9)_.
+- **Deploying to the internet**: the MVP only runs locally _(roadmap, §9)_.
 - Payments, plans, teams or sharing briefs with other users.
-- Batch research (CSV) or scheduled research.
-- CRM integration (HubSpot, Salesforce), PDF export.
+- Batch research (CSV) or scheduled research _(now on the post-MVP roadmap, §9)_.
+- CRM integration (HubSpot, Salesforce). PDF export _(roadmap, §9)_.
 - Native mobile app (the web app only needs to be responsive).
 - Editing a brief by hand.
 
@@ -96,3 +96,22 @@ Fixed sections, always in this order:
 ## 8. Open questions
 
 - Is a "Competitors" section worth adding? → Decide after testing 10 briefs.
+
+## 9. Post-MVP roadmap
+
+After the MVP, these features are added one at a time (phases 7-16 in the implementation plan).
+Each gets its detailed specification here when its phase starts.
+
+| # | Feature | Why |
+|---|---|---|
+| F6 | CI and an animated demo | Show the project working and healthy without cloning it |
+| F7 | Close the evaluation (cost experiment, owner rating) | Meet O1-O4 |
+| F8 | LLM-as-judge quality scores | Measure brief quality objectively, not just "it ran" |
+| F9 | Verifier agent | Fewer unsupported claims; a second agent checks the first |
+| F10 | Swappable model provider + comparison | Pick models on evidence (quality, time, cost) |
+| F11 | Custom tools | Data sources beyond web search |
+| F12 | Batch research from a CSV | Prepare many meetings at once |
+| F13 | Watchlist with scheduled refresh | Know when something changes at a followed company |
+| F14 | Export to Markdown and PDF | Share briefs outside Radar |
+| F15 | Users and deployment | A public, signed-in version |
+

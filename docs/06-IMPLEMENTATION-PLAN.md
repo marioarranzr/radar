@@ -77,8 +77,63 @@
 | 5 | 2 afternoons |
 | 6 | ½ afternoon |
 
-## Possible next steps (post-MVP, each with its own mini-PRD)
-- Users and login + deploying to the internet (this is where Supabase or similar would fit).
-- Batch research from a CSV (Message Batches API, 50 % cheaper).
-- Weekly scheduled "new signals" briefs.
-- A custom tool that queries a real API (e.g. a company registry) → client-side tool loop.
+# Post-MVP roadmap
+
+> Each phase starts by writing its mini-spec (PRD feature + TRD section) and ends with the app
+> working, tests green, CI green and the README updated. Built one phase after another on `main`.
+
+## Phase 7 · Showcase
+- [x] **P7.1** GitHub Actions CI: lint, tests and build on every push, with a README badge.
+- [ ] **P7.2** Animated demo in the README (type a company → live steps → brief).
+
+**Done:** a visitor sees the app working and a green build without cloning the repo.
+
+## Phase 8 · Close the evaluation
+- [ ] **P8.1** Cost experiment: `search_context_size: "low"` vs `"medium"` on the same 10 companies; keep the cheaper setting if quality holds (O4).
+- [ ] **P8.2** Owner rates the 10 briefs useful / not useful (O1). _(Owner task.)_
+
+**Done:** O1-O4 recorded in `docs/eval-results.md` with the chosen configuration.
+
+## Phase 9 · LLM-as-judge evaluation
+- [ ] **P9.1** Judge: a second model scores each brief (groundedness, completeness, relevance, hallucination flags) with a strict output schema.
+- [ ] **P9.2** `npm run agent:eval` runs the judge and adds its scores to the results table.
+
+**Done:** every eval run produces objective quality scores next to time and cost.
+
+## Phase 10 · Verifier agent (multi-agent)
+- [ ] **P10.1** Verifier: after the researcher, a second agent re-checks key facts and signals against their sources and downgrades unsupported ones to unconfirmed.
+- [ ] **P10.2** Progress steps and the brief show what was verified; judge scores compared with and without the verifier.
+
+**Done:** the verifier measurably reduces unsupported claims in the eval.
+
+## Phase 11 · Swappable model provider
+- [ ] **P11.1** Provider interface; OpenAI and Anthropic implementations of the research loop.
+- [ ] **P11.2** Model comparison: the eval run across providers/models, published as a table.
+
+**Done:** `LLM_PROVIDER` switches providers with no other code change; comparison table in the docs.
+
+## Phase 12 · Custom tools
+- [ ] **P12.1** A client-side tool beyond web search (to be chosen when the phase starts, e.g. a public company registry), with the agent loop executing it.
+
+**Done:** the agent calls our own tool when relevant and its results appear in the brief's sources.
+
+## Phase 13 · Batch research
+- [ ] **P13.1** Paste or upload a CSV of companies; runs are queued with bounded concurrency and respect the daily limit.
+
+**Done:** 10 companies from a CSV end up as 10 briefs in the history.
+
+## Phase 14 · Watchlist
+- [ ] **P14.1** Follow a company; Radar re-researches it on a schedule and highlights new recent signals.
+
+**Done:** a followed company shows "new since last time" after a refresh.
+
+## Phase 15 · Export
+- [ ] **P15.1** Download a brief as Markdown and as a print-ready PDF.
+
+**Done:** both files open correctly and contain all eight sections.
+
+## Phase 16 · Users and deployment
+- [ ] **P16.1** Decide hosting, auth and database with the owner (accounts and running costs are theirs).
+- [ ] **P16.2** Implement and deploy.
+
+**Done:** a public URL where a signed-in user can research companies.
