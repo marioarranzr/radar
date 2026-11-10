@@ -1,5 +1,5 @@
 import type OpenAI from "openai";
-import type { AgentRequest, AgentStream } from "@/agent/run";
+import type { AgentRequest, AgentStream } from "@/agent/loop";
 
 type StreamEvent = OpenAI.Responses.ResponseStreamEvent;
 

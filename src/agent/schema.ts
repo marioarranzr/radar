@@ -72,8 +72,13 @@ function stripUnsupported(node: unknown): unknown {
   );
 }
 
-/** JSON Schema for the `submit_report` function parameters, limited to what strict mode accepts. */
+/** JSON Schema for a submit function's parameters, limited to what strict mode accepts. */
+export function toStrictJsonSchema(schema: z.ZodType): { type: "object"; [key: string]: unknown } {
+  const json = stripUnsupported(z.toJSONSchema(schema)) as Record<string, unknown>;
+  return { ...json, type: "object" };
+}
+
+/** JSON Schema for the `submit_report` function parameters. */
 export function reportInputSchema(): { type: "object"; [key: string]: unknown } {
-  const schema = stripUnsupported(z.toJSONSchema(ReportSchema)) as Record<string, unknown>;
-  return { ...schema, type: "object" };
+  return toStrictJsonSchema(ReportSchema);
 }
