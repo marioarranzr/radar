@@ -23,6 +23,8 @@ export interface Research {
   outputTokens: number | null;
   searches: number | null;
   pagesRead: number | null;
+  /** What the verifier agent checked (docs/02-TRD.md §3.9); null if it didn't run. */
+  verification: VerificationSummary | null;
   startedAt: string | null;
   finishedAt: string | null;
   createdAt: string;
@@ -36,8 +38,15 @@ export interface ResearchStep {
   createdAt: string;
 }
 
+export interface VerificationSummary {
+  checked: number;
+  downgraded: number;
+  removedSignals: number;
+}
+
 export interface RunMetrics {
   companyName?: string | null;
+  verification?: VerificationSummary | null;
   inputTokens?: number | null;
   outputTokens?: number | null;
   searches?: number | null;
@@ -49,7 +58,7 @@ const SCHEMA_PATH = join(process.cwd(), "db", "schema.sql");
 
 type Row = Record<string, string | number | null>;
 
-function parseReport(value: Row[string]): unknown {
+function parseJson(value: Row[string]): unknown {
   if (typeof value !== "string") return null;
   try {
     return JSON.parse(value);
@@ -64,7 +73,7 @@ function toResearch(row: Row): Research {
     query: row.query as string,
     context: row.context as string | null,
     status: row.status as ResearchStatus,
-    report: parseReport(row.report),
+    report: parseJson(row.report),
     companyName: row.company_name as string | null,
     error: row.error as string | null,
     attempts: row.attempts as number,
@@ -72,6 +81,7 @@ function toResearch(row: Row): Research {
     outputTokens: row.output_tokens as number | null,
     searches: row.searches as number | null,
     pagesRead: row.pages_read as number | null,
+    verification: (parseJson(row.verification ?? null) as VerificationSummary | null) ?? null,
     startedAt: row.started_at as string | null,
     finishedAt: row.finished_at as string | null,
     createdAt: row.created_at as string,
@@ -88,12 +98,26 @@ function toStep(row: Row): ResearchStep {
   };
 }
 
-/** Opens (and if needed creates) the database and applies the schema. */
+/** Columns added after the first release, as `name -> SQL type`. */
+const ADDED_COLUMNS: Record<string, string> = { verification: "TEXT" };
+
+/** `CREATE TABLE IF NOT EXISTS` never alters existing tables, so add later columns when missing. */
+export function migrate(db: DatabaseSync): void {
+  const existing = new Set(
+    (db.prepare("PRAGMA table_info(research)").all() as { name: string }[]).map((column) => column.name),
+  );
+  for (const [name, type] of Object.entries(ADDED_COLUMNS)) {
+    if (!existing.has(name)) db.exec(`ALTER TABLE research ADD COLUMN ${name} ${type}`);
+  }
+}
+
+/** Opens (and if needed creates) the database, applies the schema and migrates older files. */
 export function openDatabase(path: string): DatabaseSync {
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
   db.exec("PRAGMA busy_timeout = 5000;");
   db.exec(readFileSync(SCHEMA_PATH, "utf8"));
+  migrate(db);
   return db;
 }
 
@@ -173,7 +197,7 @@ export function createStore(db: DatabaseSync) {
         `UPDATE research
             SET status = 'done', report = ?, company_name = ?, error = NULL,
                 input_tokens = ?, output_tokens = ?, searches = ?, pages_read = ?,
-                finished_at = ?
+                verification = ?, finished_at = ?
           WHERE id = ?`,
       ).run(
         JSON.stringify(report),
@@ -182,6 +206,7 @@ export function createStore(db: DatabaseSync) {
         metrics.outputTokens ?? null,
         metrics.searches ?? null,
         metrics.pagesRead ?? null,
+        metrics.verification ? JSON.stringify(metrics.verification) : null,
         nowIso(),
         id,
       ).changes > 0;
@@ -233,7 +258,7 @@ export function createStore(db: DatabaseSync) {
             `UPDATE research
                 SET status = 'queued', error = NULL, report = NULL, company_name = NULL,
                     input_tokens = NULL, output_tokens = NULL, searches = NULL, pages_read = NULL,
-                    started_at = NULL, finished_at = NULL
+                    verification = NULL, started_at = NULL, finished_at = NULL
               WHERE id = ? AND status = 'failed'`,
           )
           .run(id);

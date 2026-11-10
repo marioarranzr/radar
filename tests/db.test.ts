@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createStore, openDatabase, startOfDayUtc, type Store } from "@/lib/db";
+import { DatabaseSync } from "node:sqlite";
+import { createStore, migrate, openDatabase, startOfDayUtc, type Store } from "@/lib/db";
 
 let store: Store;
 
@@ -67,6 +68,18 @@ describe("research store", () => {
       error: null,
     });
     expect(store.getResearch(id)?.finishedAt).not.toBeNull();
+  });
+
+  it("stores the verification summary with the brief and clears it on retry", () => {
+    const id = store.createResearch({ query: "Acme Corp" });
+    store.markRunning(id);
+    store.markDone(id, {}, { verification: { checked: 8, downgraded: 1, removedSignals: 0 } });
+    expect(store.getResearch(id)?.verification).toEqual({ checked: 8, downgraded: 1, removedSignals: 0 });
+
+    const other = store.createResearch({ query: "Other Co" });
+    store.markRunning(other);
+    store.markDone(other, {});
+    expect(store.getResearch(other)?.verification).toBeNull();
   });
 
   it("records a failure with a readable error", () => {
@@ -196,3 +209,19 @@ describe("startOfDayUtc", () => {
     );
   });
 });
+
+describe("migrate", () => {
+  it("adds columns introduced after the first release to an older database", () => {
+    const db = new DatabaseSync(":memory:");
+    db.exec("CREATE TABLE research (id TEXT PRIMARY KEY, query TEXT NOT NULL)");
+    db.exec("INSERT INTO research (id, query) VALUES ('r1', 'Acme')");
+
+    migrate(db);
+    migrate(db); // idempotent
+
+    const columns = (db.prepare("PRAGMA table_info(research)").all() as { name: string }[]).map((c) => c.name);
+    expect(columns).toContain("verification");
+    expect(db.prepare("SELECT query FROM research").get()).toEqual({ query: "Acme" });
+  });
+});
+
