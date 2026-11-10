@@ -38,6 +38,30 @@ Checked on 2026-10-15 against the stored briefs (no model involved):
 | Cited URLs that load (2xx/3xx) | 89 of 117 |
 | Cited URLs not verifiable automatically (bot protection or timeout, e.g. all Personio pages) | 28 of 117 |
 
+## LLM judge scores
+
+Run on 2026-11-10 with `npm run agent:judge` (judge: `gpt-6.1-sol`, TRD §3.8) on the same ten
+briefs. The judge opened the cited pages for the 5 most important claims of each brief.
+
+| Company | Grounded | Complete | Relevant | Recent | Claims supported |
+|---|---|---|---|---|---|
+| Typeform | 5 | 4 | 4 | 5 | 5/5 |
+| Glovo | 5 | 4 | 4 | 4 | 5/5 |
+| Wallapop | 4 | 5 | 5 | 5 | 5/5 |
+| Personio | 5 | 4 | 4 | 5 | 5/5 |
+| Mercadona | 5 | 4 | 4 | 5 | 5/5 |
+| Seedtag | 5 | 5 | 4 | 5 | 5/5 |
+| Clarity AI | 5 | 4 | 4 | 4 | 5/5 |
+| TravelPerk | 5 | 5 | 4 | 4 | 5/5 |
+| Idealista | 5 | 5 | 4 | 4 | 5/5 |
+| Notion | 5 | 4 | 4 | 4 | 5/5 |
+| **Average** | **4.9** | **4.4** | **4.1** | **4.5** | **50/50 (100 %)** |
+
+Judge cost: ~$0.61 for the ten. **Caveat:** the judge is the same model that wrote the briefs, and
+models tend to rate their own output favourably; treat these as an upper bound and set a different
+`JUDGE_MODEL` for definitive numbers. Relevance is the lowest score: the briefs are accurate, and
+the next gains are in making pains and questions more specific to a sales conversation.
+
 ## Observations
 
 - 10/10 runs produced a valid brief on the first request: no reminders, no validation retries,
