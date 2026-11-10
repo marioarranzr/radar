@@ -29,6 +29,16 @@ export interface SubmitFunction<T> {
   sanitize?: (raw: unknown) => unknown;
 }
 
+/** A function the model can call that our own code executes (docs/02-TRD.md §3.12). */
+export interface ClientFunction {
+  name: string;
+  description: string;
+  /** JSON Schema of the arguments (strict-mode compatible). */
+  parameters: { type: "object"; [key: string]: unknown };
+  /** Runs the call; the returned text goes back to the model. */
+  run: (args: unknown) => Promise<string>;
+}
+
 export interface LoopOptions<T> {
   createStream: CreateStream;
   model: string;
@@ -36,6 +46,8 @@ export interface LoopOptions<T> {
   input: string;
   tools: HostedTool[];
   submit: SubmitFunction<T>;
+  /** Client functions the model may call before submitting. */
+  functions?: ClientFunction[];
   /** Sent once if the model stops without calling the submit function. */
   reminder: string;
   effort?: "low" | "medium" | "high";
@@ -68,8 +80,18 @@ function parseArguments(raw: string): unknown {
   }
 }
 
+/** Runs a client function; failures go back to the model as text instead of failing the run. */
+async function runClientFunction(fn: ClientFunction, rawArguments: string): Promise<string> {
+  try {
+    return await fn.run(parseArguments(rawArguments));
+  } catch (error) {
+    return `Error: ${fn.name} failed (${error instanceof Error ? error.message : "unknown error"}). Continue without it.`;
+  }
+}
+
 export async function runSubmitLoop<T>(options: LoopOptions<T>): Promise<LoopResult<T>> {
   const { submit } = options;
+  const functions = new Map((options.functions ?? []).map((fn) => [fn.name, fn]));
   const usage: Usage = { inputTokens: 0, outputTokens: 0 };
   let input: string | InputItem[] = options.input;
   let previousResponseId: string | null = null;
@@ -86,6 +108,13 @@ export async function runSubmitLoop<T>(options: LoopOptions<T>): Promise<LoopRes
       max_output_tokens: options.maxOutputTokens ?? 32000,
       tools: [
         ...options.tools,
+        ...(options.functions ?? []).map((fn) => ({
+          type: "function" as const,
+          name: fn.name,
+          description: fn.description,
+          strict: true,
+          parameters: fn.parameters,
+        })),
         {
           type: "function",
           name: submit.name,
@@ -139,6 +168,21 @@ export async function runSubmitLoop<T>(options: LoopOptions<T>): Promise<LoopRes
             .join("\n")}`,
         },
       ];
+      continue;
+    }
+
+    const clientCalls = response.output.filter(
+      (item): item is OpenAI.Responses.ResponseFunctionToolCall =>
+        item.type === "function_call" && functions.has(item.name),
+    );
+    if (clientCalls.length > 0) {
+      input = await Promise.all(
+        clientCalls.map(async (clientCall) => ({
+          type: "function_call_output" as const,
+          call_id: clientCall.call_id,
+          output: await runClientFunction(functions.get(clientCall.name)!, clientCall.arguments),
+        })),
+      );
       continue;
     }
 
