@@ -30,6 +30,11 @@ describe("stepForItem", () => {
     expect(stepForItem(item)).toEqual({ kind: "fetch", label: "Scanning: acme.com/pricing" });
   });
 
+  it("handles a web search call without an action (seen from the real API)", () => {
+    const item = { type: "web_search_call", id: "ws", status: "completed" } as unknown as Item;
+    expect(stepForItem(item)).toEqual({ kind: "search", label: "Searching the web" });
+  });
+
   it("falls back to generic labels when details are missing", () => {
     expect(stepForItem(webSearch({ type: "search" }))?.label).toBe("Searching the web");
     expect(stepForItem(webSearch({ type: "open_page", url: null }))?.label).toBe("Reading a page");

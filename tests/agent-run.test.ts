@@ -152,6 +152,15 @@ describe("runResearchAgent", () => {
     expect(store.getResearch(id)).toBeNull();
   });
 
+  it("keeps researching when progress reporting throws", async () => {
+    const malformed = { type: "web_search_call", id: "ws", status: "completed", action: null } as unknown as Item;
+    const model = fakeModel([response([malformed, submit(validReport)])]);
+
+    await runResearchAgent(id, deps(model.createStream));
+
+    expect(store.getResearch(id)?.status).toBe("done");
+  });
+
   it("does nothing for an unknown research id", async () => {
     const model = fakeModel([]);
     await runResearchAgent("missing", deps(model.createStream));

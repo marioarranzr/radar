@@ -99,7 +99,13 @@ export async function runSubmitLoop<T>(options: LoopOptions<T>): Promise<LoopRes
 
     let aborted = false;
     stream.on("response.output_item.done", ({ item }) => {
-      if (!aborted && options.onItem?.(item) === false) aborted = true;
+      if (aborted || !options.onItem) return;
+      try {
+        if (options.onItem(item) === false) aborted = true;
+      } catch (error) {
+        // Progress reporting must never fail a run.
+        console.error("[agent] onItem failed; continuing", error);
+      }
     });
 
     const response = await stream.finalResponse();

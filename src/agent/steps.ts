@@ -30,7 +30,9 @@ export function shortUrl(raw: string): string {
 /** Returns the progress step for a finished output item, or null if it isn't one. */
 export function stepForItem(item: OpenAI.Responses.ResponseOutputItem): Step | null {
   if (item.type === "web_search_call") {
-    const { action } = item;
+    // The API sometimes omits `action` even though the SDK types require it.
+    const action = item.action as typeof item.action | undefined;
+    if (!action) return { kind: "search", label: "Searching the web" };
     if (action.type === "search") {
       const query = (action.queries?.[0] ?? action.query)?.trim();
       return { kind: "search", label: query ? truncate(`Searching: “${query}”`) : "Searching the web" };
