@@ -123,7 +123,7 @@
 **Done:** the agent calls our own tool when relevant and its results appear in the brief's sources.
 
 ## Phase 13 · Batch research
-- [ ] **P13.1** Run queue with bounded concurrency (TRD §3.10) used by every research.
+- [x] **P13.1** Run queue with bounded concurrency (TRD §3.10) used by every research.
 - [ ] **P13.2** `POST /api/research/batch` with validation and the daily limit.
 - [ ] **P13.3** "Research several" on the home page (paste or CSV) and a live-refreshing history.
 
