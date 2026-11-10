@@ -301,5 +301,6 @@ tests/
 | 2026-11-10 | New signals computed at read time from `previous_id` | Storing a diff | No duplicated data; the comparison can improve without a migration |
 | 2026-11-10 | **`search_context_size: "low"` by default** | `"medium"` | Same 10 companies: avg cost $0.168 → $0.138 (meets O4), median 70 s → 42 s, judge scores within noise (49/50 vs 50/50 claims supported) |
 | 2026-11-10 | First custom tool: Wikidata company facts | OpenCorporates, GLEIF, scraping a registry | Free, no key, structured and citable; GLEIF has legal data only, OpenCorporates now needs a key |
+| 2026-11-10 | Keep `gpt-6.1-sol` as the default model | `gpt-6-luna`, `gpt-6-astra` | Same 10 companies, same judge: Luna $0.038 but relevance 3.4 and 90 % claims supported; Astra $0.66 for a small gain (see eval results) |
 | 2026-10-14 | `tsx` to run `scripts/` | `node --experimental-strip-types` | Node can't resolve the `@/` path alias; `tsx` honours tsconfig paths |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |

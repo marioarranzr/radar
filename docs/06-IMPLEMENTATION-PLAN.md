@@ -112,10 +112,11 @@
 **Done:** the verifier measurably reduces unsupported claims in the eval.
 
 ## Phase 11 · Swappable model provider
-- [ ] **P11.1** Provider interface; OpenAI and Anthropic implementations of the research loop.
-- [ ] **P11.2** Model comparison: the eval run across providers/models, published as a table.
+- [x] **P11.1** Model comparison across OpenAI models (Luna, Sol, Astra) with the same judge, published as a table.
+- [ ] **P11.2** Provider interface with an Anthropic implementation of the shared loop. _(Blocked: needs a working Anthropic API key to test live.)_
+- [ ] **P11.3** The comparison extended to Claude models.
 
-**Done:** `LLM_PROVIDER` switches providers with no other code change; comparison table in the docs.
+**Done:** models chosen on evidence (quality, time, cost); `LLM_PROVIDER` switches providers with no other code change.
 
 ## Phase 12 · Custom tools
 - [x] **P12.1** The shared loop executes client functions (TRD §3.7, §3.12).

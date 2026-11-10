@@ -80,6 +80,24 @@ a bug the experiment exposed (a web search item without an `action`, now fixed) 
 **Decision:** `low` is now the default. It meets O4 and is much faster; quality moves within the
 judge's noise.
 
+## Model comparison (phase 11)
+
+Run on 2026-11-10 with `OPENAI_MODEL=<model> JUDGE_MODEL=gpt-6.1-sol npm run agent:eval`, default
+`low` search context, no verifier. The judge is Sol for every model, so scores are comparable. Astra
+ran on 3 of the companies (Typeform, Mercadona, Notion) to bound cost.
+
+| Model | Briefs | Avg cost | Median time | Grounded | Complete | Relevant | Recent | Claims supported |
+|---|---|---|---|---|---|---|---|---|
+| `gpt-6-luna` | 10 | **$0.038** | 39 s | 4.4 | 4.0 | **3.4** | 4.5 | **90 %** |
+| `gpt-6.1-sol` | 10 | $0.138 | 42 s | 4.6 | 4.6 | 4.2 | 4.8 | 98 % |
+| `gpt-6-astra` | 3 | $0.663 | 51 s | 5.0 | 5.0 | 4.0 | 5.0 | 100 % |
+
+Luna's cost is mostly the per-search fee; it also cites fewer sources (5–9 vs 7–13).
+
+**Decision:** Sol stays the default. Luna is 3.6× cheaper but drops on relevance and leaves 1 in 10
+checked claims unsupported; Astra is 5× the cost for a small gain. Next experiment: Luna with the
+verifier on, the case where a second agent is most likely to pay for itself.
+
 ## Verifier agent
 
 Run on 2026-11-10 with `npm run agent:verify-eval`: the verifier (TRD §3.9) re-checked the same ten
