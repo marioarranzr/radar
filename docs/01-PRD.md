@@ -122,3 +122,11 @@ Each gets its detailed specification here when its phase starts.
 - Success: every eval run reports quality scores next to time and cost, so changes to the prompt,
   model or settings can be compared on quality, not just on whether they ran.
 
+### F9 · Verifier agent (phase 10)
+- After the research, a second agent re-checks every key fact and recent signal against its cited page.
+- Facts it can't confirm are marked "unconfirmed"; signals its sources contradict are removed.
+  It never adds or rewrites content.
+- The brief's footer says how many facts were verified and how many were downgraded.
+- Success: the judge's groundedness score and share of supported claims go up compared with briefs
+  produced without the verifier, at an acceptable extra cost and time.
+

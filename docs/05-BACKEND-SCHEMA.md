@@ -39,6 +39,7 @@ research_steps      (research_id → research.id, ON DELETE CASCADE)
 | `output_tokens` | `INTEGER` | NULL | |
 | `searches` | `INTEGER` | NULL | Number of `web_search` calls used |
 | `pages_read` | `INTEGER` | NULL | Number of `web_fetch` calls used |
+| `verification` | `TEXT` | NULL | JSON `{ checked, downgraded, removedSignals }` from the verifier (TRD §3.9); NULL if skipped or failed |
 | `started_at` | `TEXT` | NULL | ISO 8601 UTC |
 | `finished_at` | `TEXT` | NULL | ISO 8601 UTC |
 | `created_at` | `TEXT` | NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')) | ISO 8601 UTC |
@@ -76,6 +77,7 @@ CREATE TABLE IF NOT EXISTS research (
   output_tokens INTEGER,
   searches      INTEGER,
   pages_read    INTEGER,
+  verification  TEXT,
   started_at    TEXT,
   finished_at   TEXT,
   created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
@@ -103,8 +105,8 @@ CREATE INDEX IF NOT EXISTS idx_steps_research ON research_steps (research_id, id
 - All queries use prepared statements with `?` parameters.
 - `PRAGMA busy_timeout = 5000` so concurrent writers wait instead of failing.
 - The store is cached on `globalThis` so Next.js hot-reload and separate bundles share one connection.
-- `IF NOT EXISTS` never alters existing tables: a schema change on an existing `data/radar.db` needs a manual
-  `ALTER TABLE` (or deleting the local file) — note it in the commit that changes the schema.
+- `IF NOT EXISTS` never alters existing tables, so `openDatabase` also runs a small migration: for each
+  column added after the first release (currently `verification`), `ALTER TABLE … ADD COLUMN` if missing.
 - Exposed functions (and nothing else):
 
 | Function | Used by |

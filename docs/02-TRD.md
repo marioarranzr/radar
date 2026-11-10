@@ -144,6 +144,29 @@ source for each and marks it `supported`, `unsupported` or `unverifiable`, then 
 Plus a one-paragraph `summary`. Results are printed as a table and saved as JSON in `data/evals/`
 (ignored by git); the headline numbers go into `docs/eval-results.md`.
 
+### 3.9 Verifier agent (`src/agent/verify.ts`)
+After the researcher submits a valid brief, a second agent checks it before it is saved.
+
+| Setting | Value |
+|---|---|
+| Model | `OPENAI_MODEL` |
+| Tools | `web_search` (to open the cited pages) + strict `submit_verification` function |
+| Effort | `reasoning.effort: "low"` (targeted checks, not open research) |
+| Switch | `VERIFY_BRIEFS` (default `true`) |
+
+It receives the brief with every key fact and recent signal numbered, opens the relevant cited
+page for each and returns a verdict per item: `supported`, `unsupported` or `unverifiable`.
+
+- **It can only downgrade, never add.** A key fact that is not `supported` gets `confirmed: false`;
+  an `unsupported` recent signal is removed. The verifier cannot change values or add facts, so it
+  cannot introduce new hallucinations.
+- Progress steps: "Verifying the facts", then "Checking: <page>" for each page it opens.
+- The outcome is saved in `research.verification` (JSON): `{ checked, downgraded, removedSignals }`,
+  and shown in the brief's footer.
+- **If the verifier fails** (API error, no submission, invalid output), the researcher's brief is
+  saved unchanged with `verification = null`: the run still succeeds.
+- Its token usage is added to the run's metrics, so cost reflects both agents.
+
 ## 4. Own APIs (Route Handlers)
 
 | Method | Route | Body / response | Notes |
@@ -164,6 +187,7 @@ rebinding) and non-GET requests with a non-local `Origin` are rejected with 403 
 OPENAI_API_KEY=                # required, server only
 OPENAI_MODEL=gpt-6.1-sol
 JUDGE_MODEL=                  # optional, evaluation only; defaults to OPENAI_MODEL
+VERIFY_BRIEFS=true            # run the verifier agent after each research
 DAILY_RESEARCH_LIMIT=10
 DATABASE_PATH=./data/radar.db
 ```
@@ -181,6 +205,7 @@ src/
   agent/
     loop.ts         # shared submit-function agent loop (§3.7)
     run.ts          # runResearchAgent(id)
+    verify.ts       # verifier agent (§3.9)
     prompt.ts
     schema.ts       # ReportSchema (Zod)
     steps.ts        # translates events → readable steps
@@ -234,5 +259,7 @@ tests/
 | 2026-10-14 | Read raw stream events instead of the SDK's `responses.stream()` helper | `client.responses.stream()` | The helper's accumulator throws on valid sequences ("expected output item type 'message', got 'function_call'"); the terminal event already carries the full response |
 | 2026-11-10 | One shared agent loop for the researcher, judge and verifier | Copying the loop per agent | One place for chaining, retries, refusal and truncation handling |
 | 2026-11-10 | The judge uses the same model by default, configurable via `JUDGE_MODEL` | Always a stronger model | Cost; a model may favour its own output, so a different `JUDGE_MODEL` is recommended for final numbers |
+| 2026-11-10 | The verifier can only downgrade facts or remove signals | Letting it rewrite the brief | A checker that can add content can also add errors |
+| 2026-11-10 | Small in-code migration adds new columns to existing databases | Asking to delete `data/radar.db` | Owners keep their history across schema changes |
 | 2026-10-14 | `tsx` to run `scripts/` | `node --experimental-strip-types` | Node can't resolve the `@/` path alias; `tsx` honours tsconfig paths |
 | 2026-10-14 | **Everything in English** (code, docs, UI, briefs) | Spanish | Public repo, portfolio for recruiters |

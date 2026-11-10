@@ -104,8 +104,10 @@
 **Done:** every eval run produces objective quality scores next to time and cost.
 
 ## Phase 10 · Verifier agent (multi-agent)
-- [ ] **P10.1** Verifier: after the researcher, a second agent re-checks key facts and signals against their sources and downgrades unsupported ones to unconfirmed.
-- [ ] **P10.2** Progress steps and the brief show what was verified; judge scores compared with and without the verifier.
+- [ ] **P10.1** `verification` column with an in-code migration for existing databases.
+- [ ] **P10.2** Verifier agent (TRD §3.9) wired into the research run, with tests driven by a fake model.
+- [ ] **P10.3** Progress steps and the brief's footer show the verification.
+- [ ] **P10.4** Eval with and without the verifier; compare judge scores, time and cost.
 
 **Done:** the verifier measurably reduces unsupported claims in the eval.
 
